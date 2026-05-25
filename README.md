@@ -4,8 +4,8 @@ A continuous-time battery simulation framework that couples a second-order Theve
 
 **Paper:** IEEE ICCE Berlin 2026
 
-[![Compile & Deploy](https://github.com/teconpower/icce-berlin/actions/workflows/compile-and-deploy.yml/badge.svg)](https://github.com/teconpower/icce-berlin/actions/workflows/compile-and-deploy.yml)
-[📄 Download PDF](https://teconpower.github.io/icce-berlin/icce_berlin_2026.pdf)
+[![Compile & Deploy](https://github.com/Zyphoriate/CETUS/actions/workflows/compile-and-deploy.yml/badge.svg)](https://github.com/Zyphoriate/CETUS/actions/workflows/compile-and-deploy.yml)
+[📄 Download PDF](https://zyphoriate.github.io/CETUS/icce_berlin_2026.pdf)
 
 ## Features
 
@@ -38,7 +38,7 @@ Requires a TeX Live distribution with `IEEEtran.cls` (included) and standard pac
 ## CI/CD
 
 GitHub Actions compiles the paper on every push and deploys the PDF to GitHub Pages.
-See [`.github/workflows/compile-and-deploy.yml`](.github/workflows/compile-and-deploy.yml).
+See [`.github/workflows/compile-and-deploy.yml`](https://github.com/Zyphoriate/CETUS/blob/main/.github/workflows/compile-and-deploy.yml).
 
 ## Citation
 
