@@ -1,0 +1,327 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{url}
+
+\graphicspath{{figures/}}
+
+\begin{document}
+
+\title{A Continuous-Time ECM--OCV Model for Smartphone Battery Time-to-Empty Prediction with Constant-Power Load and Debounced Cutoff}
+
+\author{\IEEEauthorblockN{Author One}
+\IEEEauthorblockA{\textit{Department / Affiliation} \\
+\textit{Institution}\\
+City, Country \\
+email@domain}
+\and
+\IEEEauthorblockN{Author Two}
+\IEEEauthorblockA{\textit{Department / Affiliation} \\
+\textit{Institution}\\
+City, Country \\
+email@domain}
+\and
+\IEEEauthorblockN{Author Three}
+\IEEEauthorblockA{\textit{Department / Affiliation} \\
+\textit{Institution}\\
+City, Country \\
+email@domain}
+}
+
+\maketitle
+
+\begin{abstract}
+Predicting smartphone battery Time-to-Empty (TTE) under realistic workloads is challenging because power demand, electrochemical state, temperature, and aging all interact. We present a continuous-time framework that couples a second-order Thevenin equivalent-circuit model (ECM) and an Open-Circuit Voltage to State-of-Charge (OCV--SOC) lookup with a system-level load model aggregating screen, CPU, cellular, WiFi, GPS and background contributions. A constant-power load constraint is enforced through an implicit per-step current solve, and a debounced cutoff stabilises the shutdown decision. Capacity and resistance temperature dependencies are calibrated from public battery datasets, and component power coefficients are estimated from Android Debug Bridge (ADB) traces of a 4724~mAh device. Across four representative usage profiles at \SI{25}{\celsius} the predicted TTE spans 39.45~h (idle), 9.06~h (video), 5.34~h (gaming) and 4.08~h (mixed). Sensitivity analysis identifies screen brightness, network activity, CPU load and baseline draw as dominant TTE drivers, while low-power peripherals contribute marginally. The framework supports user- and OS-level battery-life recommendations and is portable to other consumer devices.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Lithium-ion battery, smartphone, time-to-empty prediction, equivalent circuit model, OCV--SOC, sensitivity analysis, consumer electronics.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Smartphones are dominant consumer electronics platforms, and battery life remains one of the most user-visible quality attributes. Yet under nominally similar usage the runtime often varies by hours, because the battery is simultaneously a load-driven electrical system, a thermally coupled cell, and a slowly aging electrochemical device. Prior work has addressed each piece in isolation: equivalent circuit models (ECMs) capture short-term electrical dynamics \cite{plett2015}, OCV--SOC characterisation provides voltage--state mappings \cite{zhu2022capacity}, temperature dependencies follow Arrhenius-type laws \cite{arrhenius1889}, and aging models capture cycle-induced fade \cite{nasa_dataset}. Component-level power profiling on Android has been studied since PowerTutor \cite{zhang2010powertutor}.
+
+What is still missing for a consumer-electronics design context is a single, reproducible continuous-time pipeline that (i) takes a workload trace as input, (ii) solves the implicit constant-power coupling between terminal voltage and battery current, and (iii) returns Time-to-Empty (TTE) and component-resolved drain attributions consistent with both bench data and on-device measurements. This paper contributes such a pipeline:
+\begin{itemize}
+\item A coupled ECM--OCV--load model with quadratic per-step current solve and debounced cutoff, separating shutdown threshold from numerical feasibility.
+\item A calibration workflow that fuses public temperature--capacity data \cite{en15010060}, NASA aging measurements \cite{nasa_dataset}, Zenodo OCV--SOC data \cite{zhu2022capacity} and ADB-derived component power coefficients.
+\item Cross-scenario TTE predictions and an elasticity-based sensitivity analysis that ranks the drivers most worth optimising in OS scheduling and user behaviour.
+\end{itemize}
+
+Fig.~\ref{fig:workflow} summarises the pipeline. The remainder of the paper presents the model (Section~\ref{sec:model}), the calibration data (Section~\ref{sec:data}), the results and sensitivity analysis (Section~\ref{sec:results}), and discussion (Section~\ref{sec:discussion}).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{workflow.pdf}
+\caption{Modeling and calibration workflow: data acquisition, parameter fitting, scenario simulation, and sensitivity analysis.}
+\label{fig:workflow}
+\end{figure}
+
+\section{System Model}
+\label{sec:model}
+
+\subsection{State-of-Charge Dynamics}
+Let $z(t)\in[0,1]$ be the battery State-of-Charge (SOC). Coulomb counting gives
+\begin{equation}
+\frac{dz}{dt} = -\frac{I(t)}{Q_{\max,\mathrm{eff}}(T,N)},
+\end{equation}
+where $I(t)$ is the battery current (discharge positive), and the effective capacity factorises into a slowly varying capacity state, a temperature multiplier and an aging multiplier:
+\begin{equation}
+Q_{\max,\mathrm{eff}}(T,N)=Q_{\max}(t)\,\phi_{\mathrm{temp}}(T)\,\phi_{\mathrm{age}}(N,T).
+\end{equation}
+
+\subsection{Second-Order Thevenin ECM}
+The terminal voltage uses ohmic resistance plus two polarisation RC branches \cite{plett2015}:
+\begin{align}
+V_t(t) &= V_{oc}(z(t)) - R_0(T)\,I(t) - v_1(t) - v_2(t),\\
+\dot v_1 &= -\tfrac{1}{R_1 C_1}v_1 + \tfrac{1}{C_1}I,\\
+\dot v_2 &= -\tfrac{1}{R_2 C_2}v_2 + \tfrac{1}{C_2}I,
+\end{align}
+where $V_{oc}(\cdot)$ is taken from the OCV--SOC lookup of Section~\ref{sec:data}.
+
+\subsection{Constant-Power Load and Implicit Current Solve}
+The workload trace provides battery-side load power demand $P_{\mathrm{load}}(t)$. With DC--DC efficiency $\eta_{\mathrm{dc}}$, current and voltage are coupled by
+\begin{equation}
+P_{\mathrm{load}}(t) = \eta_{\mathrm{dc}}\,V_t(t)\,I(t).
+\end{equation}
+Because $V_t$ depends on $I$, substituting the ECM voltage produces a quadratic in $I$ at each time step:
+\begin{equation}
+\eta_{\mathrm{dc}}R_0(T)\,I^2 - \eta_{\mathrm{dc}}\bigl(V_{oc}(z)-v_1-v_2\bigr)I + P_{\mathrm{load}} = 0,
+\label{eq:quad}
+\end{equation}
+and we keep the physically admissible (nonnegative) root. When the discriminant becomes infeasible at very low voltage we enforce a numerical lower bound $V_{\min}$ on the effective driving voltage. We deliberately separate this from the user-facing shutdown cutoff $V_{\mathrm{cut}}$, used only to define TTE.
+
+\subsection{Debounced Cutoff}
+Short voltage dips during sustained loads can cause premature termination. We optionally apply a first-order low-pass on the terminal voltage,
+\begin{equation}
+\dot v_f = \frac{V_t - v_f}{\tau_f},
+\end{equation}
+and declare end-of-discharge when $v_f \le V_{\mathrm{cut}}$ instead of $V_t \le V_{\mathrm{cut}}$.
+
+\subsection{Power Consumption Model}
+Total load power is decomposed by component:
+\begin{equation}
+P_{\mathrm{load}}(t) = P_{\mathrm{base}} + \sum_k \alpha_k(t)\,x_k(t),
+\end{equation}
+where $x_k(t)$ encodes component-specific usage (e.g., screen brightness, CPU utilisation, radio activity, GPS state) and $\alpha_k(t)$ is the corresponding power coefficient. This modular form lets us swap workload profiles without changing the battery side of the model.
+
+\subsection{Temperature and Aging}
+The capacity multiplier is a clipped cubic:
+\begin{equation}
+\phi_{\mathrm{temp}}(T) = \mathrm{clip}\bigl(\mathrm{poly}_3(T),\phi_{\min},\phi_{\max}\bigr),
+\end{equation}
+and ohmic resistance follows an Arrhenius law \cite{arrhenius1889}
+\begin{equation}
+R_0(T) = R_{0,\mathrm{ref}}\exp\!\Bigl(\beta\bigl(\tfrac{1}{T+273.15}-\tfrac{1}{298.15}\bigr)\Bigr).
+\end{equation}
+A cell-level energy balance \cite{bernardi1985} gives the thermal state
+\begin{equation}
+m c_p \frac{dT_b}{dt} = Q_{\mathrm{gen}} - hA(T_b-T_{\mathrm{amb}}),
+\end{equation}
+with $Q_{\mathrm{gen}} = I^2 R_0 + v_1^2/R_1 + v_2^2/R_2$. Aging enters multiplicatively via $\phi_{\mathrm{age}}(N,T)=\exp(-k(T)N)$, with $k(T)$ fitted from cycle data.
+
+\section{Calibration Data}
+\label{sec:data}
+
+\subsection{Temperature--Capacity Multiplier}
+We normalise reported capacity \cite{en15010060} by the value at \SI{25}{\celsius} and fit a cubic
+\begin{align}
+\phi_{\mathrm{temp}}(T) =\;& -1.234\!\times\!10^{-6}\,T^{3} - 8.259\!\times\!10^{-5}\,T^{2}\nonumber\\
+& + 1.225\!\times\!10^{-2}\,T + 7.359\!\times\!10^{-1}.
+\end{align}
+The fit (Fig.~\ref{fig:phi_ocv}\subref{fig:phi}) captures the well-known capacity drop at low temperatures and the saturation near room conditions.
+
+\subsection{OCV--SOC Curve}
+We construct the OCV--SOC lookup from the Zenodo cell dataset \cite{zhu2022capacity} after smoothing and monotone resampling (Fig.~\ref{fig:phi_ocv}\subref{fig:ocv}). It is consumed as a 1-D table during simulation.
+
+\begin{figure}[t]
+\centering
+\begin{subfigure}[b]{0.49\columnwidth}
+\includegraphics[width=\textwidth]{phi_temp_cubic.png}
+\caption{$\phi_{\mathrm{temp}}(T)$ cubic fit.}
+\label{fig:phi}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.49\columnwidth}
+\includegraphics[width=\textwidth]{ocv_soc.png}
+\caption{OCV--SOC lookup.}
+\label{fig:ocv}
+\end{subfigure}
+\caption{Calibrated capacity multiplier and voltage characteristic.}
+\label{fig:phi_ocv}
+\end{figure}
+
+\subsection{Cycle Aging}
+Fitting an exponential capacity-fade law to the NASA aging set \cite{nasa_dataset} gives a temperature-dependent aging coefficient
+\begin{equation}
+k(T) = 3.7\!\times\!10^{-5}\,T + 1.4\!\times\!10^{-3},
+\end{equation}
+i.e.\ degradation accelerates monotonically with $T$, consistent with Arrhenius-type kinetics.
+
+\subsection{Component Power Coefficients}
+We extract system-level traces from a Xiaomi 14 Pro using ADB \texttt{batterystats}, then estimate baseline coefficients by linear regression against component activity vectors. Table~\ref{tab:power} reports the resulting per-unit coefficients (W per unit activity), and Table~\ref{tab:profile} their scenario-specific scalings. Stochastic perturbations are added at runtime to emulate OS scheduling jitter while preserving scenario means; an example is shown in Fig.~\ref{fig:profile_flux}.
+
+\begin{table}[t]
+\caption{Estimated per-unit component power coefficients.}
+\label{tab:power}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Comp.\ & Base & Screen & CPU & WiFi & Cell. & GPS \\
+$\alpha_k$ & 0.45 & 2.0 & 2.5 & 0.8 & 1.2 & 0.8 \\
+\midrule
+Comp.\ & BT & Audio & Flash & RAM & PwrSv & \\
+$\alpha_k$ & 0.15 & 0.35 & 1.5 & 0.3 & 0.25 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Component activity scaling under four representative usage profiles.}
+\label{tab:profile}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Profile & Scrn & CPU & WiFi & Cell. & GPS & Audio \\
+\midrule
+Idle    & 0.0 & 0.8 & 0.4 & 0.6 & 0.8 & 0.25 \\
+Video   & 1.6 & 1.5 & 0.6 & 0.8 & 0.2 & 0.80 \\
+Gaming  & 1.8 & 2.2 & 0.5 & 0.7 & 0.1 & 0.20 \\
+Mixed   & 1.0 & 1.4 & 0.5 & 0.7 & 0.4 & 0.40 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{profile_flux.png}
+\caption{Stochastic component-power realisations around scenario baselines emulate OS scheduling variability.}
+\label{fig:profile_flux}
+\end{figure}
+
+\section{Results and Sensitivity Analysis}
+\label{sec:results}
+We simulate a fully charged 4724~mAh cell at \SI{25}{\celsius} with $V_{\mathrm{cut}}=\SI{3.3}{\volt}$. The implicit current solve in \eqref{eq:quad} runs at \SI{1}{\hertz}; the debounced cutoff uses $\tau_f=\SI{30}{\second}$.
+
+\subsection{Time-to-Empty Across Profiles}
+Fig.~\ref{fig:tte_soc} reports SOC trajectories and the resulting TTE values. The model predicts 39.45~h (idle), 9.06~h (video), 5.34~h (gaming) and 4.08~h (mixed): close to an order-of-magnitude spread between idle and the heaviest mixed-use profile. The TTE ordering matches qualitative expectations: gaming combines high CPU and bright display, while \textit{mixed} adds sustained network activity.
+
+\begin{figure}[t]
+\centering
+\begin{subfigure}[b]{0.49\columnwidth}
+\includegraphics[width=\textwidth]{tte_4724_25C.png}
+\caption{TTE per profile.}
+\label{fig:tte_bar}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.49\columnwidth}
+\includegraphics[width=\textwidth]{soc_all.png}
+\caption{SOC vs.\ time.}
+\label{fig:soc_all}
+\end{subfigure}
+\caption{TTE and SOC trajectories across the four usage profiles at \SI{25}{\celsius}.}
+\label{fig:tte_soc}
+\end{figure}
+
+\subsection{Component-Resolved Drain Attribution}
+Integrating the simulated power traces by component yields the energy attribution shown in Fig.~\ref{fig:pies}. Idle drain is dominated by baseline power; in mixed daily use, cellular and WiFi together account for roughly half the energy budget; gaming and video are CPU- and screen-heavy, with audio rising in multimedia scenarios.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{trace_pies.png}
+\caption{Component-wise share of total energy across the four profiles.}
+\label{fig:pies}
+\end{figure}
+
+\subsection{Temperature and Initial-SOC Effects}
+Fig.~\ref{fig:tte_temp} shows TTE under the mixed profile across ambient temperatures, and Fig.~\ref{fig:tte_3d} extends this to a TTE surface over initial SOC and temperature. Cold conditions sharply compress TTE through reduced effective capacity. Slightly elevated temperatures can extend short-term TTE by lowering ohmic resistance, even though they accelerate long-term degradation. The widely held view that ``heat shortens battery life'' therefore conflates instantaneous and lifetime effects.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\columnwidth]{tte_temp.png}
+\caption{TTE vs.\ ambient temperature (mixed profile).}
+\label{fig:tte_temp}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{tte_temp_soc_3d.png}
+\caption{TTE surface over initial SOC and ambient temperature.}
+\label{fig:tte_3d}
+\end{figure}
+
+\subsection{Sensitivity Analysis}
+For each multiplicative parameter $p$ we compute the dimensionless TTE elasticity
+\begin{equation}
+S_p = \frac{\partial \ln \mathrm{TTE}}{\partial \ln p} = \frac{p}{\mathrm{TTE}}\frac{\partial \mathrm{TTE}}{\partial p}.
+\end{equation}
+Fig.~\ref{fig:elasticity} ranks $S_p$ across profiles. The dominant levers are nominal capacity, screen demand, network activity, CPU load and baseline draw; flashlight, Bluetooth and RAM rank consistently low. A complementary $\pm10\%$ tornado perturbation under the gaming profile (Fig.~\ref{fig:tornado}) reaches the same conclusion through a more direct sensitivity, with screen and CPU producing the largest TTE swings.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{elasticity.png}
+\caption{TTE elasticity $S_p$ across usage profiles.}
+\label{fig:elasticity}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\columnwidth]{tornado_gaming.png}
+\caption{Tornado plot: $\pm10\%$ perturbations on per-component coefficients under the gaming profile.}
+\label{fig:tornado}
+\end{figure}
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Implications for OS Scheduling}
+The sensitivity ranking maps directly to OS-level levers:
+\begin{itemize}
+\item Reduce persistent system services and periodic wake-ups to lower the baseline.
+\item Tighten background-execution and network policies; cellular tail energy and repeated WiFi handshakes inflate the network share most visibly in idle and mixed scenarios.
+\item Use energy-aware DVFS and core selection so that boosting is reserved for latency-critical work.
+\item Batch network requests and coordinate cellular/WiFi switching to amortise radio wake costs.
+\end{itemize}
+
+\subsection{User-Facing Recommendations}
+Translating the same ranking to end users:
+\begin{itemize}
+\item Lower screen brightness or enable adaptive brightness, and shorten screen timeout; the display is consistently in the top three drain contributors.
+\item Restrict non-essential auto-start and background apps that keep CPU and radios active.
+\item Avoid running both WiFi and cellular when not needed, especially in poor-signal environments.
+\item Limit sustained heavy gaming or high-bitrate streaming, both for instantaneous drain and for thermal-stress-driven aging.
+\end{itemize}
+
+\subsection{Limitations}
+Component coefficients are calibrated from a single device; thermal effects are lumped, and the random fluctuation model is not learned from large-scale traces. Generalising to other consumer devices (wearables, AR/VR headsets) is straightforward in form but requires per-platform calibration of $\alpha_k$ and the ECM parameters.
+
+\section{Conclusion}
+We presented a continuous-time, ECM--OCV battery model with constant-power load coupling and a debounced cutoff, calibrated from public datasets and on-device ADB traces. Across four representative smartphone workloads the model yields physically interpretable TTE predictions and a clear ranking of optimisation levers: capacity, screen, network, CPU and baseline. The pipeline is reproducible from public data and portable to other consumer-electronics platforms, and provides a quantitative basis for both OS-level scheduling decisions and user-facing battery-life guidance.
+
+\begin{thebibliography}{99}
+\bibitem{plett2015} G.~L. Plett, \textit{Battery Management Systems, Volume I: Battery Modeling}. Boston: Artech House, 2015.
+\bibitem{zhu2022capacity} J.~Zhu \textit{et al.}, ``Data-driven capacity estimation of commercial lithium-ion batteries,'' Zenodo dataset 6405084, 2022. [Online]. Available: \url{https://doi.org/10.5281/zenodo.6405084}
+\bibitem{arrhenius1889} S.~Arrhenius, ``\"Uber die Reaktionsgeschwindigkeit bei der Inversion von Rohrzucker durch S\"auren,'' \textit{Z. Phys. Chem.}, vol.~4, pp.~226--248, 1889.
+\bibitem{nasa_dataset} B.~Saha and K.~Goebel, ``Battery data set,'' NASA Ames Prognostics Data Repository, NASA Ames Research Center, Moffett Field, CA, 2007. [Online]. Available: \url{https://www.nasa.gov/intelligent-systems-division}
+\bibitem{en15010060} A.~Tomaszewska \textit{et al.}, ``Lithium-ion battery temperature dependence and capacity fade,'' \textit{Energies}, vol.~15, no.~1, art.~60, 2022.
+\bibitem{zhang2010powertutor} L.~Zhang \textit{et al.}, ``Accurate online power estimation and automatic battery behavior based power model generation for smartphones,'' in \textit{Proc. CODES+ISSS}, 2010, pp.~105--114.
+\bibitem{bernardi1985} D.~Bernardi, E.~Pawlikowski, and J.~Newman, ``A general energy balance for battery systems,'' \textit{J.\ Electrochem.\ Soc.}, vol.~132, no.~1, pp.~5--12, 1985.
+\bibitem{hu2012comparative} X.~Hu, S.~Li, and H.~Peng, ``A comparative study of equivalent circuit models for Li-ion batteries,'' \textit{J.\ Power Sources}, vol.~198, pp.~359--367, 2012.
+\bibitem{pathak2017fast} M.~Pathak \textit{et al.}, ``Fast charging of lithium-ion batteries: a review of materials and modelling,'' \textit{Energy Environ.\ Sci.}, vol.~10, pp.~1568--1591, 2017.
+\bibitem{android_batterystats} Android Open Source Project, ``Battery historian and batterystats,'' Google Inc. [Online]. Available: \url{https://developer.android.com/topic/performance/power/battery-historian}
+\end{thebibliography}
+
+\end{document}

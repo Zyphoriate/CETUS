@@ -1,0 +1,31 @@
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.fdb_latexmk
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.pyg
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
+*.run.xml
+*-blx.bib
+_minted*/
+
+# Generated PDF (rebuilt by CI)
+# icce_berlin_2026.pdf
