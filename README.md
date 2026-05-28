@@ -27,10 +27,7 @@ A continuous-time battery simulation framework that couples a second-order Theve
 ## Build Locally
 
 ```bash
-pdflatex icce_berlin_2026.tex
-bibtex icce_berlin_2026
-pdflatex icce_berlin_2026.tex
-pdflatex icce_berlin_2026.tex
+latexmk -pdf -interaction=nonstopmode icce_berlin_2026.tex
 ```
 
 Requires a TeX Live distribution with `IEEEtran.cls` (included) and standard packages
