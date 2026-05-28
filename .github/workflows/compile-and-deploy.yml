@@ -29,12 +29,15 @@ jobs:
             texlive-fonts-recommended \
             texlive-fonts-extra \
             texlive-science \
-            texlive-publishers \
-            latexmk
+            texlive-publishers
 
       - name: Compile LaTeX
         run: |
-          latexmk -pdf -interaction=nonstopmode -halt-on-error icce_berlin_2026.tex
+          rm -f icce_berlin_2026.aux icce_berlin_2026.bbl icce_berlin_2026.blg icce_berlin_2026.out
+          pdflatex -interaction=nonstopmode icce_berlin_2026.tex
+          bibtex icce_berlin_2026
+          pdflatex -interaction=nonstopmode icce_berlin_2026.tex
+          pdflatex -interaction=nonstopmode icce_berlin_2026.tex
 
       - name: Copy output to deploy dir
         run: |
