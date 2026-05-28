@@ -29,7 +29,8 @@ jobs:
             texlive-fonts-recommended \
             texlive-fonts-extra \
             texlive-science \
-            texlive-publishers
+            texlive-publishers \
+            latexmk
 
       - name: Compile LaTeX
         run: |
