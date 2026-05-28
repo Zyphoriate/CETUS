@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{newtxtext,newtxmath}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
@@ -143,7 +144,7 @@ Based on the above discussion, the existing approaches exhibit complementary lim
 \section{Proposed Method}
 \label{sec:model}
 
-The proposed model couples four subsystems: SOC dynamics, a second-order Thevenin ECM, a constant-power load constraint, and temperature/aging modulation. The overall structure is shown in Fig.~\ref{fig:model_overview}. The method proceeds in five steps.
+The proposed model couples four subsystems: SOC dynamics, a second-order Thevenin ECM, a constant-power load constraint, and temperature/aging modulation. The method proceeds in five steps.
 
 \textbf{Step 1: Battery-cell electrochemical model.}
 
@@ -197,7 +198,7 @@ Let $\mathcal{K} = \{\mathrm{scr},\,\mathrm{cpu},\,\mathrm{wifi},\,\mathrm{cell}
     \quad \epsilon_k(t) \sim \mathcal{N}(0,\,\sigma_k^2),
     \label{eq:pdecomp}
 \end{equation}
-where $P_{\mathrm{base}}$ is the always-on baseline, $x_k(t) \in [0, 1]$ is the normalised activity of component $k$, $\alpha_k$ is the per-component power coefficient, and $\epsilon_k(t)$ models OS scheduling jitter. Coefficients $\{\alpha_k\}$ are fitted from ADB \texttt{batterystats} traces (Section~\ref{sec:data}). The stochastic terms propagate through \eqref{eq:quad} and \eqref{eq:soc}, yielding a TTE uncertainty interval.
+where $P_{\mathrm{base}}$ is the always-on baseline, $x_k(t) \in [0, 1]$ is the normalised activity of component $k$, $\alpha_k$ is the per-component power coefficient, and $\epsilon_k(t)$ models OS scheduling jitter. Coefficients $\{\alpha_k\}$ are fitted from ADB \texttt{batterystats} traces (Section~\ref{sec:experiment}). The stochastic terms propagate through \eqref{eq:quad} and \eqref{eq:soc}, yielding a TTE uncertainty interval.
 
 \textbf{Step 3: Temperature and aging correction.}
 
