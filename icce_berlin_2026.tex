@@ -76,14 +76,13 @@ Lithium-ion battery, smartphone, time-to-empty prediction, equivalent circuit mo
 
 \section{Introduction}
 
-smart phones are an important part of moderne life. but batter life is hard to estimate.
+Smartphones have become indispensable in daily life, yet battery endurance remains a persistent source of user frustration. Accurate time-to-empty (TTE) prediction—the estimate of how long a device can continue operating before shutdown—is essential both for user experience and for OS-level power management decisions such as task scheduling and component throttling. However, TTE prediction is inherently challenging because the discharge rate depends on a complex interplay of factors: the electrochemical state of the lithium-ion cell, the instantaneous power draw of hardware peripherals (screen, CPU, radios, GPS), and the user's workload pattern.
 
-current estimation algs falls into three main categories:
-1. purely data driven ones that may or may not consider user behavior
-2. mostly or purely physics-model driven one that builds a physical model for battery
-these are useful algs, but they fail to consider the whole picture
+Existing approaches to battery life prediction fall into three broad categories. Statistical methods, such as linear extrapolation from recent SOC history, are lightweight but fail under non-stationary workloads. Data-driven methods leverage machine learning to capture usage patterns from logged traces, yet they degrade when the test distribution diverges from training conditions. Physics-based methods construct equivalent circuit models (ECMs) of the battery cell and track its internal state via filtering, but they typically model only the cell itself and neglect the peripheral components—screen, CPU, radios—that in practice dominate runtime energy consumption. Each category captures part of the picture; none jointly addresses the electrochemical dynamics of the cell, the heterogeneous power draw of peripherals, and the variability of real-world usage.
 
-we proposed a novel alg that incorporates open-source data and physics-model (for both batter and peripherals such as screen, gps, wifi, etc.) along side with user behavior that more accurately predicts SOC
+In this paper, we propose a hybrid physics-informed framework for smartphone TTE prediction. The framework couples a second-order Thevenin ECM of the battery cell with a component-level power decomposition that explicitly models screen, CPU, WiFi, cellular, GPS, and other peripherals. Temperature and aging effects are incorporated through Arrhenius-modulated resistance and cycle-dependent capacity fade. Critically, all model parameters are fitted from authentic ADB \texttt{batterystats} traces collected on two consumer Android devices under three usage profiles (gaming, short-video browsing, and mixed daily use), rather than from synthetic charge--discharge curves.
+
+The principal contributions of this paper are threefold. First, we construct a coupled ODE system that jointly captures cell electrochemistry and per-component peripheral demand, providing a unified discharge model suitable for real-time TTE inference. Second, we validate the model on held-out traces from real devices, demonstrating a mean TTE MAE of \SI{0.474}{h} and an average \SI{16.7}{\percent} improvement over the best baseline in five of six test scenarios. Third, through systematic ablation and sensitivity analyses, we quantify the contribution of each modelling subsystem and identify the dominant parameters that govern TTE accuracy, offering practical guidance for per-device calibration.
 
 
 
