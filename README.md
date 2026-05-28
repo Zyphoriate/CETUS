@@ -28,6 +28,7 @@ A continuous-time battery simulation framework that couples a second-order Theve
 
 ```bash
 pdflatex icce_berlin_2026.tex
+bibtex icce_berlin_2026
 pdflatex icce_berlin_2026.tex
 pdflatex icce_berlin_2026.tex
 ```

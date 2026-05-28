@@ -33,6 +33,7 @@ jobs:
       - name: Compile LaTeX
         run: |
           pdflatex -interaction=nonstopmode icce_berlin_2026.tex
+          bibtex icce_berlin_2026
           pdflatex -interaction=nonstopmode icce_berlin_2026.tex
           pdflatex -interaction=nonstopmode icce_berlin_2026.tex
 

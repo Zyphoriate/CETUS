@@ -27,5 +27,9 @@
 *-blx.bib
 _minted*/
 
+# BibTeX
+*.bbl
+*.blg
+
 # Generated PDF (rebuilt by CI)
 # icce_berlin_2026.pdf
