@@ -32,4 +32,4 @@ _minted*/
 *.blg
 
 # Generated PDF (rebuilt by CI)
-# icce_berlin_2026.pdf
+icce_berlin_2026.pdf

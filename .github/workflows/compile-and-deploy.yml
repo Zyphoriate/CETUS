@@ -33,11 +33,13 @@ jobs:
 
       - name: Compile LaTeX
         run: |
-          rm -f icce_berlin_2026.aux icce_berlin_2026.bbl icce_berlin_2026.blg icce_berlin_2026.out
+          rm -f icce_berlin_2026.pdf icce_berlin_2026.aux icce_berlin_2026.bbl icce_berlin_2026.blg icce_berlin_2026.out
           pdflatex -interaction=nonstopmode icce_berlin_2026.tex
           bibtex icce_berlin_2026
           pdflatex -interaction=nonstopmode icce_berlin_2026.tex
           pdflatex -interaction=nonstopmode icce_berlin_2026.tex
+          test -f icce_berlin_2026.pdf || { echo "ERROR: PDF not generated"; exit 1; }
+          grep -c '\\\\bibitem' icce_berlin_2026.bbl && echo "BibTeX OK" || { echo "ERROR: no \\bibitem in bbl"; cat icce_berlin_2026.bbl; exit 1; }
 
       - name: Copy output to deploy dir
         run: |
