@@ -77,21 +77,12 @@ jobs:
             });
 
             for (const deployment of deployments.data) {
-              const statuses = await github.rest.repos.listDeploymentStatuses({
+              await github.rest.repos.createDeploymentStatus({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 deployment_id: deployment.id,
-                per_page: 100,
+                state: 'inactive',
               });
-
-              for (const status of statuses.data) {
-                await github.rest.repos.deleteDeploymentStatus({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  deployment_id: deployment.id,
-                  status_id: status.id,
-                });
-              }
 
               await github.rest.repos.deleteDeployment({
                 owner: context.repo.owner,
