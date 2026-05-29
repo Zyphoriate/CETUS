@@ -51,8 +51,9 @@ See [`.github/workflows/compile-and-deploy.yml`](https://github.com/Zyphoriate/C
 }
 ```
 
-- [ ] 示意图
-- [ ] 订正baseline算法
-- [ ] 校对baseline结果
-- [ ] 完善结果解释
-- [ ] 完善模型建立
+- [x] 示意图
+- [x] 订正baseline算法
+- [x] 校对baseline结果
+- [x] 完善结果解释
+- [x] 完善模型建立
+- [ ] fitted 参数展示
