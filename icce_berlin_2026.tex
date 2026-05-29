@@ -132,9 +132,19 @@ With the increasing demand for accurate battery life prediction on consumer elec
 
 \textbf{Statistical methods} estimate TTE from simple heuristics using historical SOC time series. Linear Drain extrapolates the remaining time from the average SOC decline rate, and Average Power divides the remaining energy by the mean power draw over a recent window. These methods are computationally lightweight and require no model training. However, since they rely on linearity and stationarity assumptions, prediction accuracy degrades under non-linear discharge profiles and rapidly varying workloads.
 
-\textbf{Data-driven methods} leverage machine learning to capture complex discharge patterns from real-world usage traces. \cite{electronics13244897} builds personalized deep learning models, including DNN and LSTM architectures, using real-time user behavior, app usage, and system sensor data to predict smartphone battery consumption. \cite{10.1145/3654777.3676437} adopts data-driven learning strategies to fit battery discharge curves and remaining capacity prediction directly from field-collected data. \cite{li2018predictingsmartphonebatterylife} employs large-scale fine-grained smartphone usage traces together with survival-analysis techniques, addressing data-missing problems via the concordance index. These methods benefit from adaptability to heterogeneous user patterns. Nevertheless, they require large volumes of labelled data for training, and prediction accuracy may be degraded when the test distribution deviates significantly from the training distribution.
+\textbf{Data-driven methods} 
 
-\textbf{Physics-model-based methods} construct explicit electrochemical or equivalent-circuit representations of the battery and estimate internal states through filtering or observation. \cite{BAI2022108751} proposes an adaptive dual extended Kalman filter based on a temperature-adaptive dual-polarization equivalent circuit model, enabling robust SOC estimation under varying ambient temperatures. \cite{HE2024234718} designs an extended sliding mode observer built on a fused voltage dynamics model to achieve real-time SOC estimation with low computational cost for electric vehicle batteries. \cite{10.3389/fenrg.2022.998002} applies an unscented Kalman filter to a second-order RC equivalent circuit model, demonstrating improved SOC estimation accuracy over the conventional extended Kalman filter. Physics-based methods offer strong generalization across operating conditions since they encode the underlying electrochemistry. However, they typically require precise knowledge of cell parameters that vary with temperature and aging, and incur higher computational cost than statistical alternatives.
+\cite{10.1145/3551349.3561342} E-MANAFA estimates fine-grained energy consumption of Android devices and per-component power usage by extracting component power data from power_profile.xml, capturing real-time component states and CPU frequency events via Batterystats and Perfetto, and calculating power and total energy through instantaneous current-voltage multiplication and time-interval summation without calibration or device-specific constraints.
+
+\cite{10.1145/3654777.3676437} Serenus constructs device-specific power models via lightweight linear regression on collected hardware usage and energy consumption data to realize real-time, application-scenario-level accurate energy consumption prediction, which eliminates the uncertainty of mobile device power usage to alleviate users' low-battery anxiety without heavy computational overhead and supports easy integration into mobile applications with minimal code modification.
+
+\cite{li2018predictingsmartphonebatterylife} Sherlock-Ens leverages state-of-the-art machine learning models and comprehensive real-time smartphone usage traces to predict remaining battery life, addresses the critical data missing problem via the concordance index from survival analysis, and integrates query-time features, session-specific discharge history, and user-specific behavioral patterns to achieve accurate predictions even under non-stationary discharge and varying usage workloads without strict linearity assumptions.
+
+\textbf{Physics-model-based methods} 
+
+\cite{en17153782} ECMIESP-EKF uses an improved extended single particle (IESP) model with a correction term to eliminate voltage bias, leverages multi first-order resistance-capacity circuits, a first-order resistance-capacitance equivalent circuit and nonlinear resistance to approximate solid-phase diffusion, electrolyte diffusion overpotential and electrochemical reaction overpotential respectively, and combines extended Kalman filter for high-precision state of charge estimation.
+
+\cite{ZHANG2024114105} Hysteresis-AIUKF uses an improved equivalent circuit model that integrates a modified Prandtl-Ishlinskii hysteresis model to characterize battery voltage hysteresis accurately, leverages adaptive iterative unscented Kalman filtering with online noise variance updating and forgetting factor recursive least squares for parameter identification to achieve robust and high-precision state-of-charge estimation under varying temperatures and dynamic operating conditions.
 
 Based on the above discussion, the existing approaches exhibit complementary limitations: statistical methods fail under non-linear loads, data-driven methods suffer from distributional shift, and physics-based methods that model only the battery cell ignore the heterogeneous power draw from peripheral components such as the screen, CPU, GPS, and radios. In this paper, we propose a hybrid framework whose innovations are threefold. First, we ground the predictor in \textit{authentic data} obtained from both open-source repositories and on-device traces collected from real smartphones, rather than relying on synthetic discharge curves. Second, we extend physics-based modelling \textit{beyond the battery cell} by jointly modelling the peripheral components that dominate runtime power consumption, so that the generalization of physics-based models is preserved while heterogeneous workloads are captured at the component level. Third, we conduct \textit{ablation analyses} that isolate the contribution of each modelling element (temperature correction, ECM dynamics, and per-component power decomposition), thereby quantifying the role of each subsystem in the final TTE accuracy.
 
@@ -307,16 +317,20 @@ We compare the proposed model against three categories of baseline, summarised i
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}llc@{}}
 \toprule
-Method & Input policy & Role \\
+Method & Inputs & Type \\
 \midrule
-Linear Drain      & SOC + time                               & HB \\
-Average Power     & SOC + time + capacity                    & HB \\
-Smartphone-DL     & SOC + $V_t$ + $T_b$ + history            & DD \\
+Linear Drain      & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & HB \\
+Average Power     & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & HB \\
+E-MANAFA          & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$ + $W_{\mathrm{app}}$  & DD \\
+Serenus           & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & DD \\
+Sherlock-Ens      & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & DD \\
+ECMIESP-EKF       & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & PD \\
+Hysteresis-AIUKF  & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & PD \\
 \midrule
-Ours-full         & SOC + $V_t$ + $T_b$ + ECM/OCV            & PD \\
-Ours w/o Temp     & $\phi_{\mathrm{temp}} \equiv 1$          & PD \\
-Ours w/o ECM      & $v_1 = v_2 \equiv 0$                     & PD \\
-Ours w/o Periph   & $\alpha_k \equiv 0$ for all $k$          & PD \\
+Ours-full         & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$ + $W_{\mathrm{app}}$  & Mixed \\
+Ours w/o Temp     & $\phi_{\mathrm{temp}} \equiv 1$                                & Mixed \\
+Ours w/o ECM      & $v_1 = v_2 \equiv 0$                                           & Mixed \\
+Ours w/o Periph   & $\alpha_k \equiv 0$ for all $k$                                & Mixed \\
 \bottomrule
 \multicolumn{3}{@{}l}{\footnotesize HB: History-based\quad DD: Data-driven\quad PD: Physics-driven}
 \end{tabular}
@@ -368,104 +382,127 @@ We evaluate the proposed model on three usage profiles (video, gaming, mixed) ac
 
 \subsection{Overall Prediction Performance}
 
-Table~\ref{tab:ours_perf} summarises the TTE and SOC prediction accuracy of the proposed model across all device--profile pairs. The model achieves a mean TTE MAE of \SI{0.474}{h} (\SI{28.5}{min}) across the six test conditions, with MAPE ranging from \SI{11.37}{\percent} to \SI{20.64}{\percent}. SOC trajectories are tracked with MAE between 0.30\,pp and 1.21\,pp.
+Fig~\ref{fig:tte_predict} summarises the TTE and SOC prediction result of the proposed model across all device--profile pairs. 
 
-\begin{table}[htbp]
-\footnotesize
+\begin{figure}[htbp]
 \centering
-\caption{Performance of the proposed model (Ours-full).}
-\label{tab:ours_perf}
-\setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{@{}llrrrrr@{}}
-\toprule
-Device & Scenario & $MAE_{T} $ & $MAPE$ & $MAE_{S}$ & $TTE_A$ & $TTE_P$ \\
-\midrule
-\multirow{3}{*}{Huawei}
-& Gaming  & 0.246 & 11.37 & 0.30 & 2.22 & 2.16 \\
-& Mixed   & 0.180 & 11.47 & 0.53 & 1.45 & 1.31 \\
-& Video   & 0.895 & 20.64 & 1.21 & 4.75 & 5.28 \\
-\midrule
-\multirow{3}{*}{Xiaomi}
-& Gaming  & 0.180 & 13.83 & 0.75 & 1.34 & 1.43 \\
-& Mixed   & 0.788 & 19.79 & 0.33 & 4.02 & 3.82 \\
-& Video   & 0.556 & 13.86 & 0.31 & 5.01 & 5.37 \\
-\midrule
-\multicolumn{2}{l}{Mean} & 0.474 & 15.16 & 0.57 & 3.13 & 3.23 \\
-\bottomrule
-\multicolumn{7}{@{}l}{\footnotesize $T$: TTE\quad $S$: SOC\quad $A$: actual\quad $P$: predicted}
-\end{tabular}
-\end{table}
+\centerline{\includegraphics[width=0.9\columnwidth]{line_chart.png}}
+\caption{Predicted TTE of all models}
+\label{fig:tte_predict}
+\end{figure}
 
-Three observations emerge. First, TTE prediction accuracy is strongest on the gaming profile (MAE \SI{0.18}{h}--\SI{0.25}{h}) where the 3DMark benchmark draws high and relatively stable power, and weakest on video (\SI{0.56}{h}--\SI{0.90}{h}) where short-video feed browsing causes rapid power fluctuations between scrolling and playback. Second, the model slightly overestimates TTE on video traces (predicted $>$ true), suggesting that the ECM under-predicts the voltage drop under intermittent short-video playback. Third, SOC tracking is consistently accurate (mean MAE 0.57\,pp), confirming that the coupled Coulomb-counting and ECM dynamics in \eqref{eq:odesys} faithfully capture the discharge trajectory.
+
+% \begin{table}[htbp]
+% \footnotesize
+% \centering
+% \caption{Performance of the proposed model (Ours-full).}
+% \label{tab:ours_perf}
+% \setlength{\tabcolsep}{2.5pt}
+% \begin{tabular}{@{}llrrrrr@{}}
+% \toprule
+% Device & Scenario & $MAE_{T} $ & $MAPE$ & $MAE_{S}$ & $TTE_A$ & $TTE_P$ \\
+% \midrule
+% \multirow{3}{*}{Huawei}
+% & Gaming  & 0.246 & 11.37 & 0.30 & 2.22 & 2.16 \\
+% & Mixed   & 0.180 & 11.47 & 0.53 & 1.45 & 1.31 \\
+% & Video   & 0.895 & 20.64 & 1.21 & 4.75 & 5.28 \\
+% \midrule
+% \multirow{3}{*}{Xiaomi}
+% & Gaming  & 0.180 & 13.83 & 0.75 & 1.34 & 1.43 \\
+% & Mixed   & 0.788 & 19.79 & 0.33 & 4.02 & 3.82 \\
+% & Video   & 0.556 & 13.86 & 0.31 & 5.01 & 5.37 \\
+% \midrule
+% \multicolumn{2}{l}{Mean} & 0.474 & 15.16 & 0.57 & 3.13 & 3.23 \\
+% \bottomrule
+% \multicolumn{7}{@{}l}{\footnotesize $T$: TTE\quad $S$: SOC\quad $A$: actual\quad $P$: predicted}
+% \end{tabular}
+% \end{table}
+
+% Three observations emerge. First, TTE prediction accuracy is strongest on the gaming profile (MAE \SI{0.18}{h}--\SI{0.25}{h}) where the 3DMark benchmark draws high and relatively stable power, and weakest on video (\SI{0.56}{h}--\SI{0.90}{h}) where short-video feed browsing causes rapid power fluctuations between scrolling and playback. Second, the model slightly overestimates TTE on video traces (predicted $>$ true), suggesting that the ECM under-predicts the voltage drop under intermittent short-video playback. Third, SOC tracking is consistently accurate (mean MAE 0.57\,pp), confirming that the coupled Coulomb-counting and ECM dynamics in \eqref{eq:odesys} faithfully capture the discharge trajectory.
 
 \subsection{Comparison with Baseline Methods}
 
-Table~\ref{tab:baseline} compares the best variant of the proposed model against a comprehensive set of baselines. The baselines span three categories: statistical (Linear Drain with \SI{5}{min} and \SI{10}{min} windows, Average Power with \SI{5}{min} and \SI{10}{min} windows), system-level estimators from the Android ecosystem (GearDVFS, iAware), and published methods (Serenus, Sherlock with Ridge/RF/GBRT/Ensemble regressors), plus the data-driven Smartphone-DL-adaptive. For each scenario, we report the best baseline, the best variant of our model, and the relative reduction in TTE MAE.
+Fig~\ref{fig:tte_mae} compares the tte mae of the proposed model against a comprehensive set of baselines.
 
-\begin{table}[htbp]
-\footnotesize
+\begin{figure}[htbp]
 \centering
-\caption{Comparison with baseline methods. TTE MAE in hours.}
-\label{tab:baseline}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}ll
-    S[table-format=1.3]
-    @{\,/\,}
-    l
-    S[table-format=1.3]
-    r@{}}
-\toprule
-Device & Scenario & \multicolumn{2}{c}{Best baseline} & {Best ours} & Reduction \\
-\midrule
-\multirow{3}{*}{Huawei}
-& Gaming  & 0.197 & {Smartphone-DL}  & 0.241 & $-$21.9\% \\
-& Mixed   & 0.310 & {Serenus}        & 0.180 & 41.9\% \\
-& Video   & 0.700 & {AvgPower-10min} & 0.528 & 24.5\% \\
-\midrule
-\multirow{3}{*}{Xiaomi}
-& Gaming  & 0.148 & {AvgPower-10min}    & 0.135 & 9.0\% \\
-& Mixed   & 0.794 & {Sherlock-Ensemble} & 0.763 & 4.0\% \\
-& Video   & 0.636 & {Linear-10min}      & 0.362 & 43.1\% \\
-\midrule
-\multicolumn{2}{l}{Mean} & 0.464 & {} & 0.368 & 16.7\% \\
-\bottomrule
-\end{tabular}
-\end{table}
+\centerline{\includegraphics[width=0.9\columnwidth]{bar_chart.png}}
+\caption{$TTE_{local}$ MAE across all models}
+\label{fig:tte_mae}
+\end{figure}
 
-The proposed model outperforms the best baseline in five out of six scenarios, with an average TTE MAE reduction of \SI{16.7}{\percent}. The largest gains appear on video and mixed profiles (\SI{24}{\percent}--\SI{43}{\percent}), where the physics-informed ECM provides a structural advantage over purely statistical extrapolation. On Huawei Gaming, Smartphone-DL-adaptive achieves a lower MAE (\SI{0.197}{h} vs.\ \SI{0.241}{h}), likely because the DNN overfits to the repetitive periodic pattern of the game workload on that device; however, the same DNN fails catastrophically on Xiaomi Gaming (\SI{1.637}{h}) and on video profiles (\SI{2.215}{h}--\SI{4.073}{h}), highlighting the brittleness of data-driven methods under distributional shift. In contrast, the physics-based structure of our model yields consistent performance across devices and profiles.
+
+% \begin{table}[htbp]
+% \footnotesize
+% \centering
+% \caption{Comparison with baseline methods. TTE MAE in hours.}
+% \label{tab:baseline}
+% \setlength{\tabcolsep}{3pt}
+% \begin{tabular}{@{}ll
+%     S[table-format=1.3]
+%     @{\,/\,}
+%     l
+%     S[table-format=1.3]
+%     r@{}}
+% \toprule
+% Device & Scenario & \multicolumn{2}{c}{Best baseline} & {Best ours} & Reduction \\
+% \midrule
+% \multirow{3}{*}{Huawei}
+% & Gaming  & 0.197 & {Smartphone-DL}  & 0.241 & $-$21.9\% \\
+% & Mixed   & 0.310 & {Serenus}        & 0.180 & 41.9\% \\
+% & Video   & 0.700 & {AvgPower-10min} & 0.528 & 24.5\% \\
+% \midrule
+% \multirow{3}{*}{Xiaomi}
+% & Gaming  & 0.148 & {AvgPower-10min}    & 0.135 & 9.0\% \\
+% & Mixed   & 0.794 & {Sherlock-Ensemble} & 0.763 & 4.0\% \\
+% & Video   & 0.636 & {Linear-10min}      & 0.362 & 43.1\% \\
+% \midrule
+% \multicolumn{2}{l}{Mean} & 0.464 & {} & 0.368 & 16.7\% \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+
+% The proposed model outperforms the best baseline in five out of six scenarios, with an average TTE MAE reduction of \SI{16.7}{\percent}. The largest gains appear on video and mixed profiles (\SI{24}{\percent}--\SI{43}{\percent}), where the physics-informed ECM provides a structural advantage over purely statistical extrapolation. On Huawei Gaming, Smartphone-DL-adaptive achieves a lower MAE (\SI{0.197}{h} vs.\ \SI{0.241}{h}), likely because the DNN overfits to the repetitive periodic pattern of the game workload on that device; however, the same DNN fails catastrophically on Xiaomi Gaming (\SI{1.637}{h}) and on video profiles (\SI{2.215}{h}--\SI{4.073}{h}), highlighting the brittleness of data-driven methods under distributional shift. In contrast, the physics-based structure of our model yields consistent performance across devices and profiles.
 
 \subsection{Ablation Study}
 
-Table~\ref{tab:ablation} isolates the contribution of each modelling subsystem by ablating temperature correction and ECM dynamics. Let $\Delta = \mathrm{MAE}_{\mathrm{ablated}} - \mathrm{MAE}_{\mathrm{full}}$; a negative $\Delta$ indicates that removing the module improves accuracy under the current parameterisation.
+Fig~\ref{fig:ablation_tte} shows the ablation results 
 
-\begin{table}[htbp]
-\footnotesize
+\begin{figure}[htbp]
 \centering
-\caption{Ablation results. TTE MAE in hours.}
-\label{tab:ablation}
-\setlength{\tabcolsep}{2pt}
-\begin{tabular}{@{}llrrrrrl@{}}
-\toprule
-Device & Scenario & Full & $-$Temp & $\Delta$Temp & $-$ECM & $\Delta$ECM & Best \\
-\midrule
-\multirow{3}{*}{Huawei}
-& Gaming  & 0.246 & 0.241 & $-$2.2\%  & 0.241 & $-$1.9\%  & $-$Temp \\
-& Mixed   & 0.180 & 0.352 & +95.5\%   & 0.221 & +22.6\%   & Full \\
-& Video   & 0.895 & 0.677 & $-$24.3\% & 0.528 & $-$41.0\% & $-$ECM \\
-\midrule
-\multirow{3}{*}{Xiaomi}
-& Gaming  & 0.180 & 0.135 & $-$25.2\% & 0.216 & +19.9\%   & $-$Temp \\
-& Mixed   & 0.788 & 0.819 & +4.0\%    & 0.763 & $-$3.2\%  & $-$ECM \\
-& Video   & 0.556 & 0.362 & $-$34.9\% & 0.512 & $-$8.0\%  & $-$Temp \\
-\bottomrule
-\end{tabular}
-\end{table}
+\centerline{\includegraphics[width=0.9\columnwidth]{bar_chart.png}}
+\caption{Ablation Results}
+\label{fig:ablation_tte}
+\end{figure}
 
-Two patterns merit discussion. First, removing temperature correction consistently helps on gaming and video profiles, suggesting that the current temperature parameters $\{c_n\}$ and $\beta$ fitted from the NASA dataset~\cite{nasa_dataset} do not transfer perfectly to smartphone cells at near-room-temperature operation; the correction introduces more noise than signal in these regimes. On the mixed profile (Huawei), however, temperature correction is essential (\SI{+95.5}{\percent} degradation), indicating that the wider thermal swings during alternating workloads benefit from the Arrhenius compensation in \eqref{eq:arrhenius}.
+% \begin{table}[htbp]
+% \footnotesize
+% \centering
+% \caption{Ablation results. TTE MAE in hours.}
+% \label{tab:ablation}
+% \setlength{\tabcolsep}{2pt}
+% \begin{tabular}{@{}llrrrrrl@{}}
+% \toprule
+% Device & Scenario & Full & $-$Temp & $\Delta$Temp & $-$ECM & $\Delta$ECM & Best \\
+% \midrule
+% \multirow{3}{*}{Huawei}
+% & Gaming  & 0.246 & 0.241 & $-$2.2\%  & 0.241 & $-$1.9\%  & $-$Temp \\
+% & Mixed   & 0.180 & 0.352 & +95.5\%   & 0.221 & +22.6\%   & Full \\
+% & Video   & 0.895 & 0.677 & $-$24.3\% & 0.528 & $-$41.0\% & $-$ECM \\
+% \midrule
+% \multirow{3}{*}{Xiaomi}
+% & Gaming  & 0.180 & 0.135 & $-$25.2\% & 0.216 & +19.9\%   & $-$Temp \\
+% & Mixed   & 0.788 & 0.819 & +4.0\%    & 0.763 & $-$3.2\%  & $-$ECM \\
+% & Video   & 0.556 & 0.362 & $-$34.9\% & 0.512 & $-$8.0\%  & $-$Temp \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
 
-Second, removing the ECM dynamics harms gaming accuracy on Xiaomi (\SI{+19.9}{\percent}) but improves video accuracy on Huawei (\SI{-41.0}{\percent}). The benefit on video stems from the fact that under sustained constant-current-like discharge, the RC transients in \eqref{eq:vi} add model variance without improving the mean trajectory. Conversely, the pulsed nature of GPU rendering in gaming produces rapid $I(t)$ fluctuations where the RC branches meaningfully filter the voltage response.
+% Two patterns merit discussion. First, removing temperature correction consistently helps on gaming and video profiles, suggesting that the current temperature parameters $\{c_n\}$ and $\beta$ fitted from the NASA dataset~\cite{nasa_dataset} do not transfer perfectly to smartphone cells at near-room-temperature operation; the correction introduces more noise than signal in these regimes. On the mixed profile (Huawei), however, temperature correction is essential (\SI{+95.5}{\percent} degradation), indicating that the wider thermal swings during alternating workloads benefit from the Arrhenius compensation in \eqref{eq:arrhenius}.
 
-Taken together, the ablation results confirm that both the temperature and ECM subsystems contribute non-trivially, but their optimal configuration depends on the workload characteristics. We retain Ours-full as the default and report per-profile best-variant results where relevant.
+% Second, removing the ECM dynamics harms gaming accuracy on Xiaomi (\SI{+19.9}{\percent}) but improves video accuracy on Huawei (\SI{-41.0}{\percent}). The benefit on video stems from the fact that under sustained constant-current-like discharge, the RC transients in \eqref{eq:vi} add model variance without improving the mean trajectory. Conversely, the pulsed nature of GPU rendering in gaming produces rapid $I(t)$ fluctuations where the RC branches meaningfully filter the voltage response.
+
+% Taken together, the ablation results confirm that both the temperature and ECM subsystems contribute non-trivially, but their optimal configuration depends on the workload characteristics. We retain Ours-full as the default and report per-profile best-variant results where relevant.
 
 \subsection{Sensitivity Analysis}
 
@@ -477,7 +514,7 @@ To quantify which parameters most influence TTE, we compute the dimensionless el
 \end{equation}
 for each multiplicative parameter $p$ in the model.
 
-Fig.~\ref{fig:elasticity} ranks $S_p$ across profiles. The dominant levers are nominal capacity $Q_{\max}$, the screen power coefficient $\alpha_{\mathrm{scr}}$, the CPU coefficient $\alpha_{\mathrm{cpu}}$, and the baseline draw $P_{\mathrm{base}}$. Network-related coefficients ($\alpha_{\mathrm{wifi}}$, $\alpha_{\mathrm{cell}}$) rank moderately, while GPS, audio, and Bluetooth coefficients are consistently negligible. A complementary $\pm 10\%$ tornado perturbation under the gaming profile (Fig.~\ref{fig:tornado}) corroborates this ranking through a direct sensitivity approach: screen and CPU perturbations produce the largest TTE swings ($\pm\SI{0.4}{h}$--\SI{0.6}{h}), whereas flashlight and Bluetooth perturbations are within $\pm\SI{0.02}{h}$.
+Fig.~\ref{fig:elasticity} ranks $S_p$ across profiles. The dominant levers are nominal capacity $Q_{\max}$, the screen power coefficient $\alpha_{\mathrm{scr}}$, the CPU coefficient $\alpha_{\mathrm{cpu}}$, and the baseline draw $P_{\mathrm{base}}$. Network-related coefficients ($\alpha_{\mathrm{wifi}}$, $\alpha_{\mathrm{cell}}$) rank moderately, while GPS, audio, and Bluetooth coefficients are consistently negligible. 
 
 \begin{figure}[htbp]
 \centering
@@ -486,12 +523,12 @@ Fig.~\ref{fig:elasticity} ranks $S_p$ across profiles. The dominant levers are n
 \label{fig:elasticity}
 \end{figure}
 
-\begin{figure}[htbp]
-\centering
-\centerline{\includegraphics[width=0.9\columnwidth]{tornado_gaming.png}}
-\caption{Tornado plot: $\pm 10\%$ perturbations on per-component coefficients under the gaming profile.}
-\label{fig:tornado}
-\end{figure}
+% \begin{figure}[htbp]
+% \centering
+% \centerline{\includegraphics[width=0.9\columnwidth]{tornado_gaming.png}}
+% \caption{Tornado plot: $\pm 10\%$ perturbations on per-component coefficients under the gaming profile.}
+% \label{fig:tornado}
+% \end{figure}
 
 The sensitivity results carry a practical implication for model deployment: accurate characterisation of the screen and CPU power coefficients is critical, and these should be re-fitted per device model. In contrast, GPS and audio coefficients can be reused across devices with negligible accuracy loss, reducing the per-device calibration burden.
 

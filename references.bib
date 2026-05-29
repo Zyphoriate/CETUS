@@ -90,61 +90,51 @@
 
 % Physics model 
 
-@article{BAI2022108751,
-  title    = {State of charge estimation for lithium-ion batteries under varying temperature conditions based on adaptive dual extended Kalman filter},
-  journal  = {Electric Power Systems Research},
-  volume   = {213},
-  pages    = {108751},
-  year     = {2022},
-  issn     = {0378-7796},
-  doi      = {https://doi.org/10.1016/j.epsr.2022.108751},
-  url      = {https://www.sciencedirect.com/science/article/pii/S0378779622008082},
-  author   = {Wenyuan Bai and Xinhui Zhang and Zhen Gao and Shuyu Xie and Yu Chen and Yu He and Jun Zhang},
-  keywords = {Lithium-ion batteries, State-of-charge, Radial basis function neural network, Forgetting factor recursive least square, Dual-polarization model, Extended Kalman filter},
-  abstract = {Accurate estimation of the state-of-charge (SOC) is of extreme importance for the reliability and safety of lithium-ion battery operation, for prevention of overcharge, deep discharge, and irreversible damage to batteries. Traditional SOC estimation methods do not consider the effect of temperature on estimation, which may lead to significant errors in the SOC estimation. Considering the effect of temperature change on SOC estimation for lithium-ion batteries, this paper presents a SOC estimation method based on adaptive dual extended Kalman filter (ADEKF). First, the radial basis function neural network (RBFNN) and the forgetting factor recursive least square (FFRLS) methods are adopted to characterize the relationship between battery temperature and polarization resistance and capacitance (RC) of the dual-polarization model based on experimental lithium-ion battery data, then the relationship between identified RC parameters and temperature is described by the temperature characteristic function. Secondly, an estimation method based on the ADEKF is proposed to update the RC parameters online. This method could reduce the SOC estimation error caused by the mismatch between the set RC parameter value and the actual RC parameter value due to ambient temperature changes. Finally, the experimental data of federal urban driving schedule (FUDS) at -10°C, 25°C, and 50°C are selected to simulate and verify the SOC estimation method proposed in this paper. The results indicate that, compared with the method not considering the effect of ambient temperature, the method developed in this paper is able to achieve accurate SOC estimation with a smaller root mean square error and mean absolute error in a wide range of temperatures.}
+@article{en17153782,
+  author         = {Li, Yigang and Qi, Hongzhong and Shi, Xinglei and Jian, Qifei and Lan, Fengchong and Chen, Jiqing},
+  title          = {A Physics-Based Equivalent Circuit Model and State of Charge Estimation for Lithium-Ion Batteries},
+  journal        = {Energies},
+  volume         = {17},
+  year           = {2024},
+  number         = {15},
+  article-number = {3782},
+  url            = {https://www.mdpi.com/1996-1073/17/15/3782},
+  issn           = {1996-1073},
+  abstract       = {This paper proposes a novel physics-based equivalent circuit model of the lithium-ion battery for electric vehicle applications that has comprehensive electrochemical significance and an acceptable level of complexity. Initially, the physics-based extended single particle (ESP) model is improved by adding a correction term to mitigate its voltage bias. Then, the equivalent circuit model based on the improved extended single particle (ECMIESP) model is derived. In this model, the surface state of charge (SOC) of solid particles is approximated using a capacity and multi first-order resistance-capacity equivalent circuits with only two lumped parameters. The overpotential of electrolyte diffusion is approximated using a first-order resistance-capacitance equivalent circuit. The electrochemical reaction overpotential is characterized by a nonlinear resistance. The voltage accuracies of ECMIESP and conventional 2RC equivalent circuit model (ECM2RC) are compared across the entire SOC range under various load profiles. The results demonstrate that the ECMIESP model outperforms ECM2RC model, particularly at low SOC or when the electrochemical reaction overpotential exceeds 50 mV. For instance, the ECMIESP model shows an 820.4 mV reduction in voltage error compared to the ECM2RC model at the endpoint during a 2C constant current discharge test. Lastly, the ECMIESP model was used for SOC estimation with extended Kalman filter, resulting in significantly improved accuracy compared to the conventional ECM2RC model. Therefore, the ECMIESP model has great potential for real-time applications in enhancing voltage and SOC estimation precision.},
+  doi            = {10.3390/en17153782}
 }
 
-@article{HE2024234718,
-  title    = {State-of-charge estimation by extended sliding mode observer based on lithium-ion battery voltage dynamics},
-  journal  = {Journal of Power Sources},
-  volume   = {611},
-  pages    = {234718},
+@article{ZHANG2024114105,
+  title    = {State-of-charge estimation of lithium-ion battery based on improved equivalent circuit model considering hysteresis combined with adaptive iterative unscented Kalman filtering},
+  journal  = {Journal of Energy Storage},
+  volume   = {102},
+  pages    = {114105},
   year     = {2024},
-  issn     = {0378-7753},
-  doi      = {https://doi.org/10.1016/j.jpowsour.2024.234718},
-  url      = {https://www.sciencedirect.com/science/article/pii/S0378775324006700},
-  author   = {Lin He and Guoqiang Wang and Bolin Hu and Xiaofei Liu and Jichao Liu and Mian Shi},
-  keywords = {Battery management system, Voltage dynamics model, Equivalent circuit model, Current integral method, Model parameters estimation},
-  abstract = {Lithium-ion battery charge dynamics is consisted of several discipline theories. This is particularly challenging for putting all kinds of discipline theories into a dynamics model, for which the difference between the electricity and the chemistry is very significant. In this paper, a voltage dynamics model of lithium-ion battery is formulated by fusing current-integral principle and voltage charge curve into equivalent circuit model. For low computing-power and practical engineering-application, an extended sliding mode observer is designed to estimate the state-of-charge, and five parameters of the voltage dynamics model are also observed online in real-time. Then, the extended sliding mode observer algorithm is translated into a battery management system, which is validated in a battery electric vehicle. Among extended sliding mode observer, current integral method, and extended Kalman filter, some experiments are tested in a same driving cycle. Based on experimental results and statistical analyses, it can be concluded that the extended sliding mode observer is a good candidate for state-of-charge estimation by the voltage dynamics model.}
+  issn     = {2352-152X},
+  doi      = {https://doi.org/10.1016/j.est.2024.114105},
+  url      = {https://www.sciencedirect.com/science/article/pii/S2352152X24036910},
+  author   = {Hongpeng Zhang and Bin Hu and Zilei Yu and Huancheng Wang and Liang Qu and  DebaoYang and Jizhe Wang and Wei Li and Chenzhao Bai and Yuqing Sun},
+  keywords = {Lithium-ion battery, State of charge, Hysteresis, Improved equivalent circuit model, Adaptive iterative unscented Kalman filter},
+  abstract = {The state of charge is an essential index of the operation of a lithium-ion battery. In most cases, precise values of the state of charge can already be obtained by current estimation methods. However, by cause of the hysteresis of lithium-ion batteries, the accurate open circuit voltage value cannot be transmitted to the battery management system, resulting in a biased appraisal of the state of charge. To address this issue, this article analyzes the characteristics of the hysteresis in lithium-ion batteries and defines an improved equivalent circuit model that takes hysteresis into account. A state of charge evaluation scheme based upon the improved equivalent circuit model combined with adaptive iterative unscented Kalman filtering is proffered, which is verified through experimental data under different operating conditions. The findings demonstrate that compared with state of charge estimation methods predicated on the principles of extended Kalman filtering and unscented Kalman filtering, the approach proposed in this essay shows greater accuracy, showcasing robustness and enormous potential for practical applications.}
 }
-
-@article{10.3389/fenrg.2022.998002,
-  author   = {Guo, Jishu  and Liu, Shulin  and Zhu, Rui },
-  title    = {An unscented kalman filtering method for estimation of state-of-charge of lithium-ion battery},
-  journal  = {Frontiers in Energy Research},
-  volume   = {Volume 10 - 2022},
-  year     = {2023},
-  url      = {https://www.frontiersin.org/journals/energy-research/articles/10.3389/fenrg.2022.998002},
-  doi      = {10.3389/fenrg.2022.998002},
-  issn     = {2296-598X},
-  abstract = {Accurate estimation of battery state of charge (SOC) is of great significance to improve battery management and service life. An unscented Kalman filter (UKF) method is used to increase the accuracy of SOC estimation in this paper. Firstly, a battery model that the parameters are identified by using the least squares algorithm is established, which is  foundation of the two-order RC equivalent circuit model. Secondly, SOC is estimated by UKF. In order to validate the method, experiments have been carried out under different operating conditions for LiFePO4 batteries. The obtained results are compared with that of the extended Kalman filter. Finally, the comparison shows that the UKF method provides better accuracy in the battery SOC estimation. Its estimation error is less than 2%, which is better than EKF algorithm. An effective method is provided for state estimation for battery management system.}
-}
-
 
 % Data driven
 
-@article{electronics13244897,
-  author         = {Flores-Martin, Daniel and Laso, Sergio and Herrera, Juan Luis},
-  title          = {Enhancing Smartphone Battery Life: A Deep Learning Model Based on User-Specific Application and Network Behavior},
-  journal        = {Electronics},
-  volume         = {13},
-  year           = {2024},
-  number         = {24},
-  article-number = {4897},
-  url            = {https://www.mdpi.com/2079-9292/13/24/4897},
-  issn           = {2079-9292},
-  abstract       = {Smartphones have become a central element in modern society with their widespread adoption driven by technological advancements and their ability to facilitate everyday tasks. A critical feature influencing user satisfaction and smartphone adoption is battery life, as the intensive use of mobile devices can significantly drain battery power. This paper addresses the challenge of predicting smartphone battery consumption using artificial intelligence techniques, specifically deep learning, to optimize energy efficiency. By collecting and analyzing data from mobile devices, such as application usage, screen time, network type, network usage, and battery temperature among others, we developed a predictive model tailored to user-specific behavior. This model identifies the key variables affecting battery consumption and provides personalized energy-saving strategies. Our approach offers a solution for improving battery performance, contributing to more efficient energy management in both hardware and networking terms while adapting to individual usage patterns. The results demonstrate that our approach can significantly predict the battery to anticipate power demands based on user-specific usage. While challenges remain, such as improving the generalizability of the model across different devices, this approach provides a scalable and adaptive method to improve the energy efficiency of smartphones, which will allow efficient management solutions to be suggested, contributing to better battery and network management to improve user experience and device longevity.},
-  doi            = {10.3390/electronics13244897}
+@inproceedings{10.1145/3551349.3561342,
+  author    = {Rua, Rui and Saraiva, Jo\~{a}o},
+  title     = {E-MANAFA: Energy Monitoring and ANAlysis tool For Android},
+  year      = {2023},
+  isbn      = {9781450394758},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3551349.3561342},
+  doi       = {10.1145/3551349.3561342},
+  abstract  = {This article introduces the E-MANAFA &nbsp;energy profiler, a plug-and-play, device-independent, model-based profiler capable of obtaining fine-grained energy measurements on Android devices. Besides having the capability to calculate performance metrics such as the energy consumed and runtime during a time interval, E-MANAFA &nbsp;also allows to estimate the energy consumed by each device component (e.g. CPU, WI-FI, screen). In this article, we present the main elements that compose this framework, as well as its workflow. In order to present the power of this tool, we demonstrate how the tool can measure the overhead of the instrumentation technique used in the PyAnaDroid &nbsp;application benchmarking pipeline, which already supports E-MANAFA &nbsp;to monitor power consumption in its Android application automatic execution process. Video demo: shorturl.at/hmyz5},
+  booktitle = {Proceedings of the 37th IEEE/ACM International Conference on Automated Software Engineering},
+  articleno = {202},
+  numpages  = {4},
+  location  = {Rochester, MI, USA},
+  series    = {ASE '22}
 }
 
 @inproceedings{10.1145/3654777.3676437,

@@ -50,3 +50,9 @@ See [`.github/workflows/compile-and-deploy.yml`](https://github.com/Zyphoriate/C
   year      = {2026}
 }
 ```
+
+- [ ] 示意图
+- [ ] 订正baseline算法
+- [ ] 校对baseline结果
+- [ ] 完善结果解释
+- [ ] 完善模型建立
