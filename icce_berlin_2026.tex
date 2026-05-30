@@ -72,7 +72,7 @@ lithium-ion battery, smartphone, time-to-empty prediction, equivalent circuit mo
 
 Smartphones have become indispensable in daily life, yet battery endurance remains a persistent source of user anxiety. Accurate time-to-empty (TTE) prediction—the estimate of how long a device can continue operating before shutdown—is essential both for user experience and for OS-level power management decisions such as task scheduling and component throttling. TTE prediction is inherently challenging because the discharge rate depends on a complex interplay of factors: the electrochemical state of the lithium-ion cell, the instantaneous power draw of hardware peripherals (screen, CPU, radios, GPS), and the user's workload pattern.
 
-Existing approaches to battery life prediction fall into three categories. Statistical methods, such as linear extrapolation from recent SOC history, are lightweight but fail under non-stationary workloads. Data-driven methods leverage machine learning to capture usage patterns from logged traces, yet they degrade when the test distribution diverges from training conditions. Physics-based methods construct equivalent circuit models (ECMs) of the battery cell~\cite{hu2012comparative} and track its internal state via filtering, but they typically model only the cell itself and neglect the peripheral components—screen, CPU, radios—that in practice dominate runtime energy consumption. Each category captures part of the picture; none jointly addresses the electrochemical dynamics of the cell, the heterogeneous power draw of peripherals, and the variability of real-world usage.
+Existing approaches to battery life prediction fall into three categories. Statistical methods, such as linear extrapolation from recent SOC history, are lightweight but fail under non-stationary workloads. Data-driven methods leverage machine learning to capture usage patterns from logged traces, yet they degrade when the test distribution diverges from training conditions. Physics-based methods construct equivalent circuit models (ECMs) of the battery cell~\cite{HU2012359} and track its internal state via filtering, but they typically model only the cell itself and neglect the peripheral components—screen, CPU, radios—that in practice dominate runtime energy consumption. Each category captures part of the picture; none jointly addresses the electrochemical dynamics of the cell, the heterogeneous power draw of peripherals, and the variability of real-world usage.
 
 In this paper, we propose a hybrid physics-informed framework for smartphone TTE prediction. The framework couples a second-order Thevenin ECM of the battery cell with a component-level power decomposition that explicitly models screen, CPU, WiFi, cellular, GPS, and other peripherals. Temperature and aging effects are incorporated through Arrhenius-modulated resistance and cycle-dependent capacity fade. Critically, all model parameters are fitted from authentic ADB \texttt{batterystats} traces collected on consumer Android devices under three usage profiles (gaming, short-video browsing, and mixed daily use), rather than from synthetic charge--discharge curves.
 
@@ -146,7 +146,7 @@ Let $z(t) \in [0,1]$ denote SOC. Under discharge current $I(t)$ (positive outwar
 \end{equation}
 where $Q_{\max,\mathrm{eff}}$ incorporates temperature and aging corrections (Section~\ref{subsec:temp_aging}).
 
-A second-order Thevenin ECM models the terminal voltage~\cite{plett2015}:
+A second-order Thevenin ECM models the terminal voltage~\cite{plett2015battery}:
 \begin{equation}
     V_t(t) = V_{oc}\!\bigl(z(t)\bigr) - R_0(T_b)\,I(t) - v_1(t) - v_2(t),
     \label{eq:ecm_vt}
@@ -184,19 +184,19 @@ with $\mathcal{K} = \{\mathrm{scr}, \mathrm{cpu}, \mathrm{wifi}, \mathrm{cell}, 
 \subsection{Temperature and Aging Modulation}
 \label{subsec:temp_aging}
 
-The temperature-dependent capacity multiplier is a cubic polynomial~\cite{bernardi1985}:
+The temperature-dependent capacity multiplier is a cubic polynomial~\cite{Bernardi_1985}:
 \begin{equation}
     \phi_{\mathrm{temp}}(T_b) = c_3 T_b^3 + c_2 T_b^2 + c_1 T_b + c_0.
     \label{eq:phi_temp}
 \end{equation}
-Ohmic resistance follows an Arrhenius law~\cite{arrhenius1889}:
+Ohmic resistance follows an Arrhenius law~\cite{Arrhenius+1889+226+248}:
 \begin{equation}
     R_0(T_b) = R_{0,\mathrm{ref}} \cdot \exp\!\left[\beta\left(\frac{1}{T_b + 273.15} - \frac{1}{T_{\mathrm{ref}} + 273.15}\right)\right],
     \label{eq:arrhenius}
 \end{equation}
 with $T_{\mathrm{ref}} = 25^{\circ}\mathrm{C}$.
 
-Cycle aging is modelled as exponential capacity fade:
+Cycle aging is modelled as exponential capacity fade~\cite{Bai_2021}:
 \begin{equation}
     \phi_{\mathrm{age}}(N, T_b) = \exp\!\bigl(-k(T_b)\,N\bigr),\qquad
     k(T_b) = k_0 \cdot (d_1 T_b + d_0).
@@ -256,7 +256,7 @@ Three groups of parameters are fitted from independent data sources.
 
 \textbf{Temperature and aging.} The polynomial coefficients $\{c_n\}$ in \eqref{eq:phi_temp} and aging rate $k(T)$ in \eqref{eq:phi_age} are fitted via least-squares regression on the NASA battery cycling dataset~\cite{nasa_dataset}.
 
-\textbf{OCV--SOC curve.} The lookup curve $V_{oc}(z)$ in \eqref{eq:ecm_vt} is constructed from experimental cell characterization data in the Zenodo 6405084 dataset~\cite{zhu2022capacity}.
+\textbf{OCV--SOC curve.} The lookup curve $V_{oc}(z)$ in \eqref{eq:ecm_vt} is constructed from experimental cell characterization data in the Zenodo 6405084 dataset~\cite{jiangong_zhu_2022_6405084}.
 
 \textbf{Power coefficients.} The per-component coefficients $\{\alpha_k\}$ and baseline $P_{\mathrm{base}}$ in \eqref{eq:pload} are estimated by linear regression on ADB \texttt{batterystats} traces.
 
@@ -285,12 +285,13 @@ Hysteresis-AIUKF  & \checkmark & \checkmark &            & Physics-based \\
 Ours         & \checkmark & \checkmark & \checkmark & Mixed \\
 Ours w/o Temp     & \checkmark & \checkmark & \checkmark & Mixed \\
 Ours w/o ECM      & \checkmark & \checkmark & \checkmark & Mixed \\
-Ours w/o Periph   & \checkmark & \checkmark & \checkmark & Mixed \\
+% Ours w/o Periph   & \checkmark & \checkmark & \checkmark & Mixed \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The three ablation variants are constructed as follows. Ours w/o Temp sets $\phi_{\mathrm{temp}}(T) \equiv 1$ in \eqref{eq:qmax_eff}, removing temperature-dependent capacity modulation. Ours w/o ECM sets $v_1 = v_2 \equiv 0$ in \eqref{eq:ecm_vt}, collapsing the Thevenin model to a pure resistive cell. Ours w/o Periph sets $\alpha_k \equiv 0$ for all $k$ in \eqref{eq:pload}, retaining only the baseline power $P_{\mathrm{base}}$.
+% The three ablation variants are constructed as follows. Ours w/o Temp sets $\phi_{\mathrm{temp}}(T) \equiv 1$ in \eqref{eq:qmax_eff}, removing temperature-dependent capacity modulation. Ours w/o ECM sets $v_1 = v_2 \equiv 0$ in \eqref{eq:ecm_vt}, collapsing the Thevenin model to a pure resistive cell. Ours w/o Periph sets $\alpha_k \equiv 0$ for all $k$ in \eqref{eq:pload}, retaining only the baseline power $P_{\mathrm{base}}$.
+The two ablation variants are constructed as follows. Ours w/o Temp sets $\phi_{\mathrm{temp}}(T) \equiv 1$ in \eqref{eq:qmax_eff}, removing temperature-dependent capacity modulation. Ours w/o ECM sets $v_1 = v_2 \equiv 0$ in \eqref{eq:ecm_vt}, collapsing the Thevenin model to a pure resistive cell.
 
 \subsection{Evaluation Metrics}
 
