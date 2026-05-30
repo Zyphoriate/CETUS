@@ -23,51 +23,45 @@
 \title{Conference Paper Title*}
 
 \author{
-\IEEEauthorblockN{Yujie Zhang$^*$, Mingcheng Qu$^*$\thanks{$^*$These three authors contributed equally.}}
+\IEEEauthorblockN{Yujie Zhang$^*$$^{\dagger}$\thanks{$^*$These three authors contributed equally. $\dagger$Corresponding authors.}}
 \IEEEauthorblockA{\textit{School of Cyber Science and Technology} \\
 \textit{Shandong University}\\
 Shandong, China \\
-yujie.zhang@mail.sdu.edu.cn}
+E-mail: yujie.zhang@mail.sdu.edu.cn}
+\and
+\IEEEauthorblockN{Mingcheng Qu$^*$}
+\IEEEauthorblockA{\textit{School of Cyber Science and Technology} \\
+\textit{Shandong University}\\
+Shandong, China \\
+E-mail: yujie.zhang@mail.sdu.edu.cn}
 \and
 \IEEEauthorblockN{Zonghan Jia$^*$}
 \IEEEauthorblockA{\textit{School of Computer Science and Technology} \\
 \textit{Shandong University}\\
-City, Country \\
-email address or ORCID}
-% \and
-% \IEEEauthorblockN{}
-% \IEEEauthorblockA{\textit{School of Cyber Science and Technology} \\
-% \textit{Shandong University}\\
-% City, Country \\
-% email address or ORCID}
-% \and
-% \IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
-% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-% \textit{name of organization (of Aff.)}\\
-% City, Country \\
-% email address or ORCID}
-% \and
-% \IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
-% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-% \textit{name of organization (of Aff.)}\\
-% City, Country \\
-% email address or ORCID}
-% \and
-% \IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
-% \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-% \textit{name of organization (of Aff.)}\\
-% City, Country \\
-% email address or ORCID}
+Shandong, China \\
+OCRID: 0009-0007-9626-0569}
+\and
+\IEEEauthorblockN{Honghe Guo$^{\dagger}$}
+\IEEEauthorblockA{\textit{Shandong University}\\
+Shandong, China \\
+OCRID: 0009-0008-0863-969X\\
+E-mail: craneguo@mail.sdu.edu.cn}
+\and
+\IEEEauthorblockN{Yabin Peng$^{\dagger}$}
+\IEEEauthorblockA{\textit{Shandong University}\\
+Shandong, China \\
+OCRID: 0009-0003-7753-0448\\
+E-mail: pengyabin@mail.sdu.edu.cn}
 }
 
 \maketitle
 
 \begin{abstract}
-Accurate time-to-empty (TTE) prediction is critical for smartphone user experience, yet existing methods suffer from complementary limitations: statistical estimators fail under non-linear loads, data-driven models degrade under distributional shift, and physics-based approaches typically model the battery cell in isolation, ignoring the peripheral components that dominate runtime power consumption. In this paper, we propose a hybrid physics-informed TTE prediction framework that couples a second-order Thevenin equivalent circuit model with component-level power decomposition, jointly capturing cell electrochemistry and per-component demand from screen, CPU, network radios, and other peripherals. Model parameters are fitted from authentic ADB batterystats traces collected on two Android smartphones across three usage profiles. The coupled ODE system integrates SOC dynamics, temperature-dependent Arrhenius resistance, cycle-aging capacity fade, and a debounced low-pass cutoff to produce a continuous-time discharge trajectory. On held-out test traces, the proposed model achieves a mean TTE MAE of 0.474\,h, outperforming the best baseline in five of six scenarios with an average reduction of 16.7\%. Ablation experiments confirm that both temperature correction and ECM dynamics contribute non-trivially, while sensitivity analysis identifies screen and CPU coefficients as the dominant TTE levers.
+Accurate time-to-empty (TTE) prediction on smartphones is hindered by the complex interaction between cell electrochemistry, heterogeneous peripheral power draw, and variable user workloads. Existing methods address these factors in isolation: statistical approaches fail under non-stationary loads, data-driven methods suffer distributional shift, and physics-based models neglect the screen, CPU, and radios that dominate runtime discharge. This paper proposes a hybrid physics-informed framework that couples a second-order Thevenin equivalent circuit model with component-level power decomposition and temperature/aging modulation. Per-component power coefficients are fitted from ADB \texttt{batterystats} traces collected on consumer Android devices across three usage profiles (gaming, short-video browsing, and mixed daily use). On held-out test traces spanning three devices and nine scenarios, the proposed model achieves the lowest TTE MAE in seven of nine cases, with a \SI{4.0}{\percent}--\SI{43.1}{\percent} reduction over the best-performing baseline, and ranks first or second across all scenarios. Ablation analysis reveals workload-dependent subsystem contributions: temperature correction improves mixed-use prediction but introduces noise under stable thermal conditions, while ECM dynamics benefit pulsed loads but add variance under near-constant-current discharge. Sensitivity analysis identifies nominal capacity, screen and CPU power coefficients, and baseline power draw as the dominant parameters governing TTE accuracy, while GPS and audio coefficients are negligible---a finding that narrows the per-device calibration burden to two coefficients.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Lithium-ion battery, smartphone, time-to-empty prediction, equivalent circuit model, OCV--SOC, sensitivity analysis, consumer electronics.
+lithium-ion battery, smartphone, time-to-empty prediction, equivalent circuit model, component-level power modeling, temperature compensation, sensitivity analysis.
 \end{IEEEkeywords}
 
 
@@ -76,13 +70,13 @@ Lithium-ion battery, smartphone, time-to-empty prediction, equivalent circuit mo
 
 \section{Introduction}
 
-Smartphones have become indispensable in daily life, yet battery endurance remains a persistent source of user frustration. Accurate time-to-empty (TTE) prediction—the estimate of how long a device can continue operating before shutdown—is essential both for user experience and for OS-level power management decisions such as task scheduling and component throttling. However, TTE prediction is inherently challenging because the discharge rate depends on a complex interplay of factors: the electrochemical state of the lithium-ion cell, the instantaneous power draw of hardware peripherals (screen, CPU, radios, GPS), and the user's workload pattern.
+Smartphones have become indispensable in daily life, yet battery endurance remains a persistent source of user anxiety. Accurate time-to-empty (TTE) prediction—the estimate of how long a device can continue operating before shutdown—is essential both for user experience and for OS-level power management decisions such as task scheduling and component throttling. TTE prediction is inherently challenging because the discharge rate depends on a complex interplay of factors: the electrochemical state of the lithium-ion cell, the instantaneous power draw of hardware peripherals (screen, CPU, radios, GPS), and the user's workload pattern.
 
-Existing approaches to battery life prediction fall into three broad categories. Statistical methods, such as linear extrapolation from recent SOC history, are lightweight but fail under non-stationary workloads. Data-driven methods leverage machine learning to capture usage patterns from logged traces, yet they degrade when the test distribution diverges from training conditions. Physics-based methods construct equivalent circuit models (ECMs) of the battery cell and track its internal state via filtering, but they typically model only the cell itself and neglect the peripheral components—screen, CPU, radios—that in practice dominate runtime energy consumption. Each category captures part of the picture; none jointly addresses the electrochemical dynamics of the cell, the heterogeneous power draw of peripherals, and the variability of real-world usage.
+Existing approaches to battery life prediction fall into three categories. Statistical methods, such as linear extrapolation from recent SOC history, are lightweight but fail under non-stationary workloads. Data-driven methods leverage machine learning to capture usage patterns from logged traces, yet they degrade when the test distribution diverges from training conditions. Physics-based methods construct equivalent circuit models (ECMs) of the battery cell~\cite{hu2012comparative} and track its internal state via filtering, but they typically model only the cell itself and neglect the peripheral components—screen, CPU, radios—that in practice dominate runtime energy consumption. Each category captures part of the picture; none jointly addresses the electrochemical dynamics of the cell, the heterogeneous power draw of peripherals, and the variability of real-world usage.
 
-In this paper, we propose a hybrid physics-informed framework for smartphone TTE prediction. The framework couples a second-order Thevenin ECM of the battery cell with a component-level power decomposition that explicitly models screen, CPU, WiFi, cellular, GPS, and other peripherals. Temperature and aging effects are incorporated through Arrhenius-modulated resistance and cycle-dependent capacity fade. Critically, all model parameters are fitted from authentic ADB \texttt{batterystats} traces collected on two consumer Android devices under three usage profiles (gaming, short-video browsing, and mixed daily use), rather than from synthetic charge--discharge curves.
+In this paper, we propose a hybrid physics-informed framework for smartphone TTE prediction. The framework couples a second-order Thevenin ECM of the battery cell with a component-level power decomposition that explicitly models screen, CPU, WiFi, cellular, GPS, and other peripherals. Temperature and aging effects are incorporated through Arrhenius-modulated resistance and cycle-dependent capacity fade. Critically, all model parameters are fitted from authentic ADB \texttt{batterystats} traces collected on consumer Android devices under three usage profiles (gaming, short-video browsing, and mixed daily use), rather than from synthetic charge--discharge curves.
 
-The principal contributions of this paper are threefold. First, we construct a coupled ODE system that jointly captures cell electrochemistry and per-component peripheral demand, providing a unified discharge model suitable for real-time TTE inference. Second, we validate the model on held-out traces from real devices, demonstrating a mean TTE MAE of \SI{0.474}{h} and an average \SI{16.7}{\percent} improvement over the best baseline in five of six test scenarios. Third, through systematic ablation and sensitivity analyses, we quantify the contribution of each modelling subsystem and identify the dominant parameters that govern TTE accuracy, offering practical guidance for per-device calibration.
+The principal contributions of this paper are threefold. First, we construct a coupled ODE system that jointly captures cell electrochemistry and per-component peripheral demand, providing a unified discharge model suitable for real-time TTE inference. Second, we validate the model on held-out traces from real devices, achieving the lowest TTE MAE in seven of nine device--scenario combinations with a \SI{4.0}{\percent}--\SI{43.1}{\percent} reduction over the best-performing baseline, and ranking first or second across all nine cases. Third, through systematic ablation and sensitivity analyses, we quantify the contribution of each modelling subsystem and identify $Q_{\max}$, $\alpha_{\mathrm{scr}}$, $\alpha_{\mathrm{cpu}}$, and $P_{\mathrm{base}}$ as the dominant parameters governing TTE accuracy, offering practical guidance for per-device calibration.
 
 
 
@@ -102,13 +96,14 @@ and the output is the predicted local TTE together with voltage and temperature 
 
 We focus on partial-discharge prediction from an arbitrary intermediate SOC. Let $\Delta$ be a short look-ahead horizon. The local depletion rate and TTE are
 \begin{equation}
-    r(t) = \frac{\mathrm{SOC}(t) - \mathrm{SOC}(t + \Delta)}{\Delta},
-    \qquad
+    \begin{gathered}
+    r(t) = \frac{\mathrm{SOC}(t) - \mathrm{SOC}(t + \Delta)}{\Delta}, \\[4pt]
     \mathrm{TTE}_{\mathrm{local}}(t) = \frac{\mathrm{SOC}(t) - \mathrm{SOC}_{\mathrm{cut}}}{r(t)}.
+    \end{gathered}
     \label{eq:tte_local}
 \end{equation}
 
-\textit{Definition 1:} Given $\mathcal{I}(t)$, estimate $\mathrm{TTE}_{\mathrm{local}}(t)$ accurately across heterogeneous devices, workloads, and intermediate SOC levels.
+The goal is to accurately predict $\mathrm{SOC}(t)$ and $\mathrm{TTE}_{\mathrm{local}}(t)$ from $\mathcal{I}(t)$ across heterogeneous devices, workloads, and intermediate SOC levels.
 
 \subsection{Related Work}
 \label{subsec:related_work}
@@ -117,9 +112,9 @@ TTE and SOC estimation methods fall into three categories.
 
 \textbf{Statistical methods} extrapolate TTE from historical SOC via simple heuristics such as Linear Drain (mean decline rate) and Average Power (mean power draw). They are lightweight and training-free, but fail under non-stationary workloads where linearity assumptions break.
 
-\textbf{Data-driven methods} predict energy consumption or remaining life from usage traces. E-MANAFA~\cite{10.1145/3551349.3561342} estimates per-component energy from Android power profiles without calibration. Serenus~\cite{10.1145/3654777.3676437} builds device-specific linear models for real-time application-level prediction. Sherlock-Ens~\cite{li2018predictingsmartphonebatterylife} applies survival analysis to handle data-missing problems under non-stationary discharge. These methods adapt to heterogeneous usage but degrade under distributional shift and require extensive labelled traces.
+\textbf{Data-driven methods} predict energy consumption or remaining life from usage traces. Rua and Saraiva's model, referred to as E-MANAFA~\cite{10.1145/3551349.3561342}, estimates per-component energy from Android power profiles without calibration. Lee et al.'s model, referred to as Serenus~\cite{10.1145/3654777.3676437}, builds device-specific linear models for real-time application-level prediction. Li et al.'s model, referred to as Sherlock-Ens~\cite{li2018predictingsmartphonebatterylife}, applies survival analysis to handle data-missing problems under non-stationary discharge. These methods adapt to heterogeneous usage but degrade under distributional shift and require extensive labelled traces.
 
-\textbf{Physics-based methods} track cell internal state via ECMs and Kalman filtering. ECMIESP-EKF~\cite{en17153782} combines a single-particle model with multi-stage RC circuits and EKF. Hysteresis-AIUKF~\cite{ZHANG2024114105} integrates a hysteresis model with adaptive UKF for temperature-robust SOC estimation. They generalize well across conditions but model only the battery cell, ignoring the peripheral components that dominate smartphone power consumption.
+\textbf{Physics-based methods} track cell internal state via ECMs and Kalman filtering. Li et al.'s model, referred to as ECMIESP-EKF~\cite{en17153782}, combines a single-particle model with multi-stage RC circuits and EKF. Zhang et al.'s model, referred to as Hysteresis-AIUKF~\cite{ZHANG2024114105}, integrates a hysteresis model with adaptive UKF for temperature-robust SOC estimation. They generalize well across conditions but model only the battery cell, ignoring the peripheral components that dominate smartphone power consumption.
 
 Existing approaches thus exhibit complementary gaps: statistical methods fail under non-linear loads, data-driven methods suffer distributional shift, and physics-based methods neglect peripherals. This paper proposes a hybrid framework with three innovations. First, we fit parameters from authentic ADB \texttt{batterystats} traces collected on real smartphones. Second, we extend physics-based modelling beyond the cell to jointly model screen, CPU, radios, and GPS. Third, systematic ablation isolates the contribution of temperature correction, ECM dynamics, and per-component decomposition to final TTE accuracy.
 
@@ -151,7 +146,7 @@ Let $z(t) \in [0,1]$ denote SOC. Under discharge current $I(t)$ (positive outwar
 \end{equation}
 where $Q_{\max,\mathrm{eff}}$ incorporates temperature and aging corrections (Section~\ref{subsec:temp_aging}).
 
-A second-order Thevenin ECM models the terminal voltage:
+A second-order Thevenin ECM models the terminal voltage~\cite{plett2015}:
 \begin{equation}
     V_t(t) = V_{oc}\!\bigl(z(t)\bigr) - R_0(T_b)\,I(t) - v_1(t) - v_2(t),
     \label{eq:ecm_vt}
@@ -189,12 +184,12 @@ with $\mathcal{K} = \{\mathrm{scr}, \mathrm{cpu}, \mathrm{wifi}, \mathrm{cell}, 
 \subsection{Temperature and Aging Modulation}
 \label{subsec:temp_aging}
 
-The temperature-dependent capacity multiplier is a cubic polynomial:
+The temperature-dependent capacity multiplier is a cubic polynomial~\cite{bernardi1985}:
 \begin{equation}
     \phi_{\mathrm{temp}}(T_b) = c_3 T_b^3 + c_2 T_b^2 + c_1 T_b + c_0.
     \label{eq:phi_temp}
 \end{equation}
-Ohmic resistance follows an Arrhenius law:
+Ohmic resistance follows an Arrhenius law~\cite{arrhenius1889}:
 \begin{equation}
     R_0(T_b) = R_{0,\mathrm{ref}} \cdot \exp\!\left[\beta\left(\frac{1}{T_b + 273.15} - \frac{1}{T_{\mathrm{ref}} + 273.15}\right)\right],
     \label{eq:arrhenius}
@@ -233,7 +228,6 @@ The TTE is the first passage time to the cutoff:
     \mathrm{TTE}(t) = \inf\{\, \tau > 0 \mid v_f(t + \tau) \leq V_{\mathrm{cut}} \,\}.
     \label{eq:tte_def}
 \end{equation}
-Issue from any intermediate SOC yields the local TTE of \eqref{eq:tte_local}. The parameter set $\Theta = \{Q_{\max}, R_0, R_1, R_2, C_1, C_2, P_{\mathrm{base}}, \{\alpha_k\}, \{c_n\}, \beta, \eta_{\mathrm{dc}}, V_{\mathrm{cut}}, \tau_f\}$ is fitted per device (Section~\ref{sec:experiment}).
 
 
 
@@ -246,7 +240,7 @@ Issue from any intermediate SOC yields the local TTE of \eqref{eq:tte_local}. Th
 
 \subsection{Data Collection}
 
-Power traces were collected from three Android smartphones: Xiaomi~14~Pro (4880~mAh), Huawei~Mate~9~Pro (4000~mAh), and Honor~200~Pro (5200~mAh). On each device, ADB \texttt{batterystats} logged per-component power estimates, SOC, voltage, and temperature at \SI{1}{min} intervals. Three usage profiles were recorded per device, each from \SI{100}{\percent} SOC to automatic shutdown:
+Power traces were collected from three Android smartphones: Xiaomi~14~Pro (4880~mAh), Huawei~Mate~9~Pro (4000~mAh), and Honor~200~Pro (5200~mAh). On each device, ADB \texttt{batterystats}~\cite{android_batterystats} logged per-component power estimates, SOC, voltage, and temperature at \SI{1}{min} intervals. Three usage profiles were recorded per device, each from \SI{100}{\percent} SOC to automatic shutdown:
 
 \begin{enumerate}
     \item[1)] \textit{Video}: short-video feed browsing (TikTok-style) at \SI{50}{\percent} brightness.
@@ -254,38 +248,49 @@ Power traces were collected from three Android smartphones: Xiaomi~14~Pro (4880~
     \item[3)] \textit{Mixed}: alternating web browsing, video, GPS, and idle.
 \end{enumerate}
 
-Three traces per device--profile pair were recorded (27 traces total). Two traces per pair (18) served for parameter fitting; the remaining one per pair (9) formed the held-out test set. Xiaomi and Huawei traces were used jointly for fitting; Honor was held out entirely to evaluate cross-device transfer.
+Huawei traces were used for fitting; Honor and Xiaomi were held out entirely to evaluate cross-device transfer.
+
+\subsection{Parameter Fitting}
+
+Three groups of parameters are fitted from independent data sources.
+
+\textbf{Temperature and aging.} The polynomial coefficients $\{c_n\}$ in \eqref{eq:phi_temp} and aging rate $k(T)$ in \eqref{eq:phi_age} are fitted via least-squares regression on the NASA battery cycling dataset~\cite{nasa_dataset}.
+
+\textbf{OCV--SOC curve.} The lookup curve $V_{oc}(z)$ in \eqref{eq:ecm_vt} is constructed from experimental cell characterization data in the Zenodo 6405084 dataset~\cite{zhu2022capacity}.
+
+\textbf{Power coefficients.} The per-component coefficients $\{\alpha_k\}$ and baseline $P_{\mathrm{base}}$ in \eqref{eq:pload} are estimated by linear regression on ADB \texttt{batterystats} traces.
 
 \subsection{Baseline Methods and Ablations}
 
-Table~\ref{tab:methods} lists all compared methods. Linear Drain and Average Power are lightweight statistical baselines. E-MANAFA, Serenus, and Sherlock-Ens represent data-driven approaches; ECMIESP-EKF and Hysteresis-AIUKF represent physics-based ECM methods. Ours-full is the proposed model. Three ablation variants disable temperature correction (w/o Temp), ECM dynamics (w/o ECM), or all peripheral coefficients (w/o Periph).
+Table~\ref{tab:methods} lists all compared methods. Linear Drain and Average Power are lightweight statistical baselines. E-MANAFA, Serenus, and Sherlock-Ens represent data-driven approaches; ECMIESP-EKF and Hysteresis-AIUKF represent physics-based ECM methods. Ours is the full proposed model. Three ablation variants disable temperature correction (w/o Temp), ECM dynamics (w/o ECM), or all peripheral coefficients (w/o Periph).
 
 \begin{table}[htbp]
 \footnotesize
 \centering
 \caption{Compared methods.}
 \label{tab:methods}
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}llc@{}}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-Method & Inputs & Type \\
+Method & $M_{\mathrm{batt}}$ & $S_{\mathrm{dev}}$ & $W_{\mathrm{app}}$ & Type \\
 \midrule
-Linear Drain      & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & HB \\
-Average Power     & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & HB \\
-E-MANAFA          & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$ + $W_{\mathrm{app}}$  & DD \\
-Serenus           & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & DD \\
-Sherlock-Ens      & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & DD \\
-ECMIESP-EKF       & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & PD \\
-Hysteresis-AIUKF  & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$                       & PD \\
+Linear Drain      & \checkmark & \checkmark &            & Statistical   \\
+Average Power     & \checkmark & \checkmark &            & Statistical   \\
+E-MANAFA          & \checkmark & \checkmark & \checkmark & Data-driven   \\
+Serenus           & \checkmark & \checkmark &            & Data-driven   \\
+Sherlock-Ens      & \checkmark & \checkmark &            & Data-driven   \\
+ECMIESP-EKF       & \checkmark & \checkmark &            & Physics-based \\
+Hysteresis-AIUKF  & \checkmark & \checkmark &            & Physics-based \\
 \midrule
-Ours-full         & $M_{\mathrm{batt}}$ + $S_{\mathrm{dev}}$ + $W_{\mathrm{app}}$  & Mixed \\
-Ours w/o Temp     & $\phi_{\mathrm{temp}} \equiv 1$                                & Mixed \\
-Ours w/o ECM      & $v_1 = v_2 \equiv 0$                                           & Mixed \\
-Ours w/o Periph   & $\alpha_k \equiv 0$ for all $k$                                & Mixed \\
+Ours         & \checkmark & \checkmark & \checkmark & Mixed \\
+Ours w/o Temp     & \checkmark & \checkmark & \checkmark & Mixed \\
+Ours w/o ECM      & \checkmark & \checkmark & \checkmark & Mixed \\
+Ours w/o Periph   & \checkmark & \checkmark & \checkmark & Mixed \\
 \bottomrule
-\multicolumn{3}{@{}l}{\footnotesize HB: History-based\quad DD: Data-driven\quad PD: Physics-driven}
 \end{tabular}
 \end{table}
+
+The three ablation variants are constructed as follows. Ours w/o Temp sets $\phi_{\mathrm{temp}}(T) \equiv 1$ in \eqref{eq:qmax_eff}, removing temperature-dependent capacity modulation. Ours w/o ECM sets $v_1 = v_2 \equiv 0$ in \eqref{eq:ecm_vt}, collapsing the Thevenin model to a pure resistive cell. Ours w/o Periph sets $\alpha_k \equiv 0$ for all $k$ in \eqref{eq:pload}, retaining only the baseline power $P_{\mathrm{base}}$.
 
 \subsection{Evaluation Metrics}
 
@@ -318,6 +323,8 @@ The component-level power decomposition further enables per-component energy pro
 
 We evaluate the proposed model on three usage profiles (video, gaming, mixed) across three devices. The simulation uses a time step of $\Delta t = \SI{1}{\second}$, $V_{\mathrm{cut}} = \SI{3.3}{\volt}$, and a debounce filter constant $\tau_f = \SI{30}{\second}$. All metrics are reported on the held-out test set defined in Section~\ref{sec:experiment}.
 
+{\footnotesize Unless noted otherwise, ``the proposed model'' and ``our model'' refer to the full variant with all subsystems (temperature correction, ECM dynamics, and per-component power decomposition) enabled.}
+
 \subsection{Overall Prediction Performance}
 
 \begin{figure*}[htbp]
@@ -329,7 +336,7 @@ We evaluate the proposed model on three usage profiles (video, gaming, mixed) ac
 
 Fig.~\ref{fig:tte_predict} shows the predicted TTE trajectories of all methods across three devices and nine scenarios.
 
-The proposed model tracks the true TTE consistently across all cases, including on Honor where device-specific coefficients were not fitted. No prediction deviates by more than $2\times$ from the ground truth.
+The proposed model tracks the true TTE consistently across all cases, including on Honor and Xiaomi where device-specific coefficients were not fitted. No prediction deviates by more than $2\times$ from the ground truth.
 
 Competing methods exhibit markedly larger variance. Physics-only models (ECMIESP-EKF, Hysteresis-AIUKF) diverge sharply under heterogeneous workloads—on Honor Video, ECMIESP-EKF overestimates to \SI{15.35}{h} against a true TTE of \SI{5.28}{h}. Data-driven Sherlock-Ens systematically overestimates on shorter traces, reaching \SI{6.72}{h} on Huawei Gaming (true \SI{2.22}{h}).
 
@@ -344,11 +351,11 @@ Competing methods exhibit markedly larger variance. Physics-only models (ECMIESP
 
 Fig.~\ref{fig:tte_mae} compares TTE MAE across all methods on nine device--scenario pairs. The proposed model achieves the lowest MAE in seven.
 
-On Huawei and Xiaomi, our model wins all six scenarios with \SI{4.0}{\percent}--\SI{43.1}{\percent} reduction over the best baseline. Gains are largest on video profiles, where the ECM provides a structural advantage over statistical extrapolation.
+On the fitting device (Huawei) and on Xiaomi, our model wins all six scenarios with \SI{4.0}{\percent}--\SI{43.1}{\percent} reduction over the best baseline. Gains are largest on video profiles, where the ECM provides a structural advantage over statistical extrapolation.
 
-On Honor, unseen during fitting, the model wins on Video (\SI{11.3}{\percent}) but trails E-MANAFA-transfer on Gaming (\SI{1.7}{\percent} margin) and Mixed (\SI{13.3}{\percent}), indicating that per-device re-calibration of $\{\alpha_k\}$ would improve cross-device transfer.
+On Honor, the other held-out device, the model wins on Video (\SI{11.3}{\percent}) but trails E-MANAFA on Gaming (\SI{1.7}{\percent} margin) and Mixed (\SI{13.3}{\percent}), indicating that per-device re-calibration of $\{\alpha_k\}$ would improve cross-device transfer.
 
-No single baseline dominates across scenarios. Linear/Average Power leads on three, Serenus and E-MANAFA-transfer on two each, ECMIESP-EKF and Sherlock-Ens on one each. Our model ranks first or second in all nine cases.
+No single baseline dominates across scenarios. Linear/Average Power leads on three, Serenus and E-MANAFA on two each, ECMIESP-EKF and Sherlock-Ens on one each. Our model ranks first or second in all nine cases.
 
 \subsection{Ablation Study}
 
@@ -359,7 +366,7 @@ No single baseline dominates across scenarios. Linear/Average Power leads on thr
 \label{fig:ablation_tte}
 \end{figure}
 
-Fig.~\ref{fig:ablation_tte} reports the ablation results across three devices and nine scenarios. Each bar compares Ours-full against two stripped variants: one without temperature correction (w/o Temp) and one without ECM dynamics (w/o ECM).
+Fig.~\ref{fig:ablation_tte} reports the ablation results across three devices and nine scenarios. Each bar compares Ours (the full version) against two stripped variants: one without temperature correction (w/o Temp) and one without ECM dynamics (w/o ECM).
 
 Removing temperature correction consistently improves Gaming accuracy across all three devices ($\Delta = -1.5\%$ to $-25.2\%$). Under steady 3DMark load, thermal swing is minimal, and the NASA-fitted temperature parameters introduce noise rather than signal. On Mixed workloads, the pattern reverses: temperature correction reduces error substantially on Huawei ($\Delta = +95.5\%$), where alternating WiFi, GPS, and browsing cause wider thermal excursions that the Arrhenius compensation captures.
 
@@ -406,9 +413,9 @@ Integrating the simulated power traces by component yields the energy attributio
 
 \section{Conclusion}
 
-In this paper, we proposed a hybrid physics-informed model for smartphone time-to-empty prediction that couples a second-order Thevenin ECM with component-level power decomposition and temperature/aging modulation. Unlike prior work that models the battery cell in isolation, the proposed framework jointly models peripheral components (screen, CPU, network radios, GPS) whose power draw dominates runtime discharge. The model parameters are fitted from authentic data collected via ADB \texttt{batterystats} on two real Android devices across three usage profiles.
+In this paper, we proposed a hybrid physics-informed model for smartphone time-to-empty prediction that couples a second-order Thevenin ECM with component-level power decomposition and temperature/aging modulation. Unlike prior work that models the battery cell in isolation, the proposed framework jointly models peripheral components (screen, CPU, network radios, GPS) whose power draw dominates runtime discharge. The model parameters are fitted from authentic data collected via ADB \texttt{batterystats} on real Android devices across three usage profiles.
 
-Experimental results on held-out test traces demonstrate that the proposed model achieves a mean TTE MAE of \SI{0.474}{h}, outperforming the best baseline in five of six scenarios with an average reduction of \SI{16.7}{\percent}. The largest gains appear on video and mixed workloads, where the physics-informed ECM provides a structural advantage over purely statistical extrapolation. Ablation experiments confirm that both temperature correction and ECM dynamics contribute non-trivially, with their relative importance varying by workload: temperature correction is essential under wide thermal swings, while RC dynamics are most beneficial under rapidly fluctuating GPU loads. Sensitivity analysis further reveals that screen and CPU power coefficients are the dominant TTE levers and should be calibrated per device, whereas GPS and audio coefficients can be transferred across devices with negligible accuracy loss.
+Experimental results on held-out test traces demonstrate that the proposed model achieves the lowest TTE MAE in seven of nine device--scenario combinations, ranking first or second across all cases. Ablation reveals workload-dependent subsystem contributions: temperature correction aids mixed-use prediction but introduces noise under stable thermal conditions, while ECM dynamics benefit pulsed loads but add variance under near-constant-current discharge. Sensitivity analysis identifies $Q_{\max}$, $\alpha_{\mathrm{scr}}$, $\alpha_{\mathrm{cpu}}$, and $P_{\mathrm{base}}$ as dominant parameters, while GPS, audio, and Bluetooth coefficients are negligible, narrowing per-device calibration to screen and CPU terms alone.
 
 Future work will extend the model to capture battery aging effects from longitudinal user traces and incorporate per-user workload prediction to enable proactive power management on consumer smartphones.
 
