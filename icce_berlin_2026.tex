@@ -64,6 +64,12 @@ Smartphone time-to-empty (TTE) prediction is hindered by the interplay of cell e
 lithium-ion battery, smartphone, time-to-empty prediction, equivalent circuit model, component-level power modeling, temperature compensation, sensitivity analysis.
 \end{IEEEkeywords}
 
+\begin{figure*}[htbp]
+\centering
+\centerline{\includegraphics[width=0.8\textwidth]{model_design.png}}
+\caption{Overview of the proposed TTE prediction framework.}
+\label{fig:model_design}
+\end{figure*}
 
 
 
@@ -129,13 +135,6 @@ Existing approaches thus exhibit complementary gaps: statistical methods fail un
 \label{sec:model}
 
 The proposed framework couples a second-order Thevenin ECM with component-level power decomposition in four stages: cell electrochemistry, peripheral load modelling, temperature/aging modulation, and unified ODE integration. Fig.~\ref{fig:model_design} illustrates the overall architecture.
-
-\begin{figure*}[htbp]
-\centering
-\centerline{\includegraphics[width=0.8\textwidth]{model_design.png}}
-\caption{Overview of the proposed TTE prediction framework.}
-\label{fig:model_design}
-\end{figure*}
 
 \subsection{Battery Cell Model}
 
