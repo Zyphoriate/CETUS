@@ -20,7 +20,7 @@
 
 \begin{document}
 
-\title{Conference Paper Title*}
+\title{Coupled Electrochemical and Component-Level Modeling for Real-Time Smartphone Battery Life Prediction}
 
 \author{
 \IEEEauthorblockN{Yujie Zhang$^*$$^{\dagger}$\thanks{$^*$These three authors contributed equally. $\dagger$Corresponding authors.}}
@@ -301,15 +301,6 @@ Let $\widehat{\mathrm{TTE}}_i(t)$ and $\mathrm{TTE}_i(t)$ be the predicted and t
     \mathrm{MAE}_{\mathrm{TTE}} = \frac{1}{n}\sum_{i=1}^{n} \frac{1}{|\mathcal{T}_i|}\sum_{t \in \mathcal{T}_i} \bigl|\widehat{\mathrm{TTE}}_{i}(t) - \mathrm{TTE}_{i}(t)\bigr|,
     \label{eq:mae_tte}
 \end{equation}
-% supplemented by MAPE and SOC MAE:
-% \begin{equation}
-%     \mathrm{MAPE}_{\mathrm{TTE}} = \frac{1}{n}\sum_{i=1}^{n} \frac{1}{|\mathcal{T}_i|}\sum_{t \in \mathcal{T}_i} \frac{|\widehat{\mathrm{TTE}}_{i}(t) - \mathrm{TTE}_{i}(t)|}{\mathrm{TTE}_{i}(t)} \times 100\%,
-%     \label{eq:mape_tte}
-% \end{equation}
-% \begin{equation}
-%     \mathrm{MAE}_{\mathrm{SOC}} = \frac{1}{n}\sum_{i=1}^{n} \frac{1}{|\mathcal{T}_i|}\sum_{t \in \mathcal{T}_i} \bigl|\widehat{\mathrm{SOC}}_{i}(t) - \mathrm{SOC}_{i}(t)\bigr|.
-%     \label{eq:mae_soc}
-% \end{equation}
 
 \subsection{Per-Component Analysis}
 
