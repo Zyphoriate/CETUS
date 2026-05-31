@@ -20,7 +20,7 @@
 
 \begin{document}
 
-\title{Physics-Informed Data-Driven Modeling for Component-Level Battery Life Prediction in Smartphones}
+\title{A Hybrid Physics-Informed and Data-Driven Framework for Component-Level Smartphone Battery Life Prediction}
 
 \author{
 \IEEEauthorblockN{Yujie Zhang$^*$$^{\dagger}$\thanks{$^*$These three authors contributed equally. $\dagger$Corresponding authors.}}
@@ -57,7 +57,7 @@ E-mail: pengyabin@mail.sdu.edu.cn}
 \maketitle
 
 \begin{abstract}
-Smartphone time-to-empty (TTE) prediction is hindered by the interplay of cell electrochemistry, heterogeneous peripheral power draw, and variable user workloads. Existing methods address these factors in isolation: statistical approaches fail under non-stationary loads, data-driven methods suffer distributional shift, and physics-based models neglect the screen, CPU, and radios that dominate runtime discharge. To bridge these gaps, we propose a hybrid framework that couples a second-order Thevenin equivalent circuit model with component-level power decomposition and temperature/aging modulation, with all parameters fitted from ADB \texttt{batterystats} traces on consumer Android devices across three usage profiles. Backtesting on three devices and nine scenarios shows that the proposed model achieves the lowest TTE MAE in seven of nine cases (\SI{4.0}{\percent}--\SI{43.1}{\percent} reduction over the best baseline) and ranks first or second across all scenarios. Subsequent ablation reveals workload-dependent subsystem contributions: temperature correction aids mixed-use but introduces noise under stable thermal conditions, while ECM dynamics benefit pulsed loads but add variance under near-constant-current discharge. Further sensitivity analysis identifies nominal capacity, screen and CPU coefficients, and baseline draw as dominant parameters, with GPS and audio coefficients being negligible.
+Smartphone time-to-empty (TTE) prediction is hindered by the interplay of cell electrochemistry, heterogeneous peripheral power draw, and variable user workloads. Existing methods address these factors in isolation: statistical approaches fail under non-stationary loads, data-driven methods suffer distributional shift, and physics-based models neglect the screen, CPU, and radios that dominate runtime discharge. To bridge these gaps, we propose a hybrid framework that couples a second-order Thevenin equivalent circuit model with component-level power decomposition and temperature/aging modulation. Backtesting on three devices and nine scenarios shows that the proposed model achieves the lowest TTE MAE in seven of nine cases (\SI{4.0}{\percent}--\SI{43.1}{\percent} reduction over the best baseline) and ranks first or second across all scenarios. Subsequent ablation reveals workload-dependent subsystem contributions: temperature correction aids mixed-use but introduces noise under stable thermal conditions, while ECM dynamics benefit pulsed loads but add variance under near-constant-current discharge. Further sensitivity analysis identifies nominal capacity, screen and CPU coefficients, and baseline draw as dominant parameters, with GPS and audio coefficients being negligible.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -373,18 +373,18 @@ On Honor, ablation effects are subdued (all $|\Delta| < 11\%$), suggesting that 
 
 To quantify which parameters most influence TTE, we compute the dimensionless elasticity
 \begin{equation}
-    S_k = \frac{\partial \ln \mathrm{TTE}}{\partial \ln \alpha_k}
-        = \frac{\alpha_k}{\mathrm{TTE}}\frac{\partial \mathrm{TTE}}{\partial \alpha_k},
+    S_p = \frac{\partial \ln \mathrm{TTE}}{\partial \ln p}
+        = \frac{p}{\mathrm{TTE}}\frac{\partial \mathrm{TTE}}{\partial p},
     \label{eq:elasticity}
 \end{equation}
-for each component energy coefficient $\alpha_k$ in the model.
+for each component energy coefficient $p \in \{ Q_{max}, P_{base}, \alpha_k\}$ in the model.
 
-Fig.~\ref{fig:elasticity} ranks $S_k$ across profiles. The dominant levers are nominal capacity $Q_{\max}$, the screen power coefficient $\alpha_{\mathrm{scr}}$, the CPU coefficient $\alpha_{\mathrm{cpu}}$, and the baseline draw $P_{\mathrm{base}}$. Network-related coefficients ($\alpha_{\mathrm{wifi}}$, $\alpha_{\mathrm{cell}}$) rank moderately, while GPS, audio, and Bluetooth coefficients are consistently negligible. 
+Fig.~\ref{fig:elasticity} ranks $S_p$ across profiles. The dominant levers are nominal capacity $Q_{\max}$, the screen power coefficient $\alpha_{\mathrm{scr}}$, the CPU coefficient $\alpha_{\mathrm{cpu}}$, and the baseline draw $P_{\mathrm{base}}$. Network-related coefficients ($\alpha_{\mathrm{wifi}}$, $\alpha_{\mathrm{cell}}$) rank moderately, while GPS, audio, and Bluetooth coefficients are consistently negligible. 
 
 \begin{figure}[htbp]
 \centering
 \centerline{\includegraphics[width=\columnwidth]{elasticity.png}}
-\caption{TTE elasticity $S_k$ across the three usage profiles.}
+\caption{TTE elasticity $S_p$ across the three usage profiles.}
 \label{fig:elasticity}
 \end{figure}
 
