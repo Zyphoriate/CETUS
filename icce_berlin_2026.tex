@@ -122,7 +122,7 @@ TTE and SOC estimation methods fall into three categories.
 
 \textbf{Physics-based methods} track cell internal state via ECMs and Kalman filtering. Li et al.'s model, referred to as ECMIESP-EKF~\cite{en17153782}, combines a single-particle model with multi-stage RC circuits and EKF. Zhang et al.'s model, referred to as Hysteresis-AIUKF~\cite{ZHANG2024114105}, integrates a hysteresis model with adaptive UKF for temperature-robust SOC estimation. They generalize well across conditions but model only the battery cell, ignoring the peripheral components that dominate smartphone power consumption.
 
-Existing approaches thus exhibit complementary gaps: statistical methods fail under non-linear loads, data-driven methods suffer distributional shift, and physics-based methods neglect peripherals. This paper proposes a hybrid framework with three innovations. First, we fit parameters from authentic ADB \texttt{batterystats} traces collected on real smartphones. Second, we extend physics-based modelling beyond the cell to jointly model screen, CPU, radios, and GPS. Third, systematic ablation isolates the contribution of temperature correction, ECM dynamics, and per-component decomposition to final TTE accuracy.
+Existing approaches thus exhibit complementary gaps: statistical methods fail under non-linear loads, data-driven methods suffer distributional shift, and physics-based methods neglect peripherals. This paper proposes a hybrid framework with three innovations. First, we fit parameters from authentic ADB \texttt{batterystats} traces collected on real smartphones. Second, we extend physics-based modelling beyond the cell to jointly model screen, CPU, radios, and GPS. Third, further systematic ablation isolates the contribution of temperature correction, ECM dynamics, and per-component decomposition to final TTE accuracy.
 
 
 
@@ -239,7 +239,7 @@ The TTE is the first passage time to the cutoff:
 
 \subsection{Data Collection}
 
-Power traces were collected from three Android smartphones: Xiaomi~14~Pro (4880~mAh), Huawei~Mate~9~Pro (4000~mAh), and Honor~200~Pro (5200~mAh). On each device, ADB \texttt{batterystats}~\cite{android_batterystats} logged per-component power estimates, SOC, voltage, and temperature at \SI{1}{min} intervals. Three usage profiles were recorded per device, each from \SI{100}{\percent} SOC to automatic shutdown:
+Power traces were collected from three Android smartphones: Xiaomi~14~Pro (4880~mAh), Huawei~Mate~9~Pro (4000~mAh), and Honor~200~Pro (5200~mAh). On each device, ADB \texttt{batterystats} logged per-component power estimates, SOC, voltage, and temperature at \SI{1}{min} intervals. Three usage profiles were recorded per device, each from \SI{100}{\percent} SOC to automatic shutdown:
 
 \begin{enumerate}
     \item[1)] \textit{Video}: short-video feed browsing at \SI{50}{\percent} brightness.
