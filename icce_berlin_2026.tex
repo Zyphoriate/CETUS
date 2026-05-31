@@ -242,7 +242,7 @@ The TTE is the first passage time to the cutoff:
 Power traces were collected from three Android smartphones: Xiaomi~14~Pro (4880~mAh), Huawei~Mate~9~Pro (4000~mAh), and Honor~200~Pro (5200~mAh). On each device, ADB \texttt{batterystats}~\cite{android_batterystats} logged per-component power estimates, SOC, voltage, and temperature at \SI{1}{min} intervals. Three usage profiles were recorded per device, each from \SI{100}{\percent} SOC to automatic shutdown:
 
 \begin{enumerate}
-    \item[1)] \textit{Video}: short-video feed browsing (TikTok-style) at \SI{50}{\percent} brightness.
+    \item[1)] \textit{Video}: short-video feed browsing at \SI{50}{\percent} brightness.
     \item[2)] \textit{Gaming}: 3DMark benchmark at \SI{80}{\percent} brightness.
     \item[3)] \textit{Mixed}: alternating web browsing, video, GPS, and idle.
 \end{enumerate}
@@ -262,7 +262,7 @@ Three groups of parameters are fitted from independent data sources.
 \subsection{Baseline Methods and Ablations}
 
 % Table~\ref{tab:methods} lists all compared methods. Linear Drain and Average Power are lightweight statistical baselines. E-MANAFA, Serenus, and Sherlock-Ens represent data-driven approaches; ECMIESP-EKF and Hysteresis-AIUKF represent physics-based ECM methods. Ours is the full proposed model. Three ablation variants disable temperature correction (w/o Temp), ECM dynamics (w/o ECM), or all peripheral coefficients (w/o Periph).
-Table~\ref{tab:methods} lists all compared methods. Linear Drain and Average Power are lightweight statistical baselines. E-MANAFA, Serenus, and Sherlock-Ens represent data-driven approaches; ECMIESP-EKF and Hysteresis-AIUKF represent physics-based ECM methods. Ours is the full proposed model. Two ablation variants disable temperature correction (w/o Temp) or ECM dynamics (w/o ECM).
+Table~\ref{tab:methods} lists all compared methods, including two statistical baselines, three data-driven approaches, two physics-based ECM methods, the proposed full model, and two ablation variants (w/o Temp, w/o ECM).
 
 \begin{table}[htbp]
 \footnotesize
