@@ -1,4 +1,4 @@
-\documentclass[conference]{IEEEtran}
+\documentclass[conference,a4paper]{IEEEtran}
 \IEEEoverridecommandlockouts
 
 \usepackage{cite}
@@ -309,9 +309,7 @@ We evaluate the proposed model on three usage profiles (video, gaming, mixed) ac
 
 Fig.~\ref{fig:tte_predict} shows the predicted TTE trajectories of all methods across three devices and nine scenarios.
 
-The proposed model tracks the true TTE consistently across all cases, including on Honor and Xiaomi where device-specific coefficients were not fitted. No prediction deviates by more than $2$ times from the ground truth.
-
-Competing methods exhibit markedly larger variance. Physics-only models (ECMIESP-EKF, Hysteresis-AIUKF) diverge sharply under heterogeneous workloads—on Honor Video, ECMIESP-EKF overestimates to \SI{15.35}{h} against a true TTE of \SI{5.28}{h}. Data-driven Sherlock-Ens systematically overestimates on shorter traces, reaching \SI{6.72}{h} on Huawei Gaming (true \SI{2.22}{h}).
+The proposed model tracks the true TTE consistently across all cases, including on Honor and Xiaomi where device-specific coefficients were not fitted. Competing methods exhibit markedly larger variance: ECMIESP-EKF overestimates to \SI{15.35}{h} against a true TTE of \SI{5.28}{h} on Honor Video, while Sherlock-Ens reaches \SI{6.72}{h} on Huawei Gaming (true \SI{2.22}{h}).
 
 \subsection{Comparison with Baseline Methods}
 
@@ -392,6 +390,13 @@ Experimental results on backtested ADB traces demonstrate that the proposed mode
 
 Future work will extend the model to capture battery aging effects from longitudinal user traces, incorporate per-user workload prediction for proactive power management, and benchmark against built-in vendor battery estimation utilities on consumer smartphones.
 
+
+
+
+
+\section*{Acknowledgment}
+
+During the preparation of this manuscript, large language models (LLMs) were used to assist in writing, code generation and literature discovery, but all content was reviewed and verified by the authors.
 
 
 
